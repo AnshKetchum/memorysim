@@ -91,12 +91,14 @@ Trace generators and scripts are located in `benchmarks/`.
 If you use MemorySim in your research, please cite:
 
 ```
-@inproceedings{chaurasia2025mem,
-  title={MemorySim: An RTL-level, timing accurate simulator model for the Chisel ecosystem},
-  author={Chaurasia, Ansh},
-  booktitle={},
-  year={2025},
-  pages={1--8}
+@misc{chaurasia2025memorysimrtlleveltimingaccurate,
+      title={MemorySim: An RTL-level, timing accurate simulator model for the Chisel ecosystem}, 
+      author={Ansh Chaurasia},
+      year={2025},
+      eprint={2508.12636},
+      archivePrefix={arXiv},
+      primaryClass={cs.AR},
+      url={https://arxiv.org/abs/2508.12636}, 
 }
 ```
 
