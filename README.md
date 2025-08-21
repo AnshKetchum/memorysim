@@ -2,7 +2,7 @@
 
 Looking for contributions!
 
-Edit 8/19/2025 - Check out our paper on MemorySim that's on [arXiV] (https://arxiv.org/abs/2508.12636)! 
+Edit 8/19/2025 - Check out our paper on MemorySim that's on [arXiV](https://arxiv.org/abs/2508.12636)! 
 
 **MemorySim** is an RTL-native, timing-accurate memory simulator designed for the Chisel/Chipyard ecosystem. It provides cycle-accurate profiling of memory subsystems, enabling hardware designers to evaluate bandwidth, latency, and power-performance trade-offs in next-generation AI accelerators.
 
