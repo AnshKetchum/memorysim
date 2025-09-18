@@ -1,11 +1,11 @@
-package testchipip.dram
+package memctrl
 
 import chisel3._
 import chisel3.util._
 import freechips.rocketchip.amba.axi4.{AXI4BundleParameters, AXI4Bundle}
 
 /**
- * Improved SimDRAMChisel
+ * Improved SimMemorySim
  *
  * - Supports multi-beat AXI bursts (len+1 beats).
  * - Uses AW/W collection to form a multi-beat write and asserts B when done.
@@ -15,7 +15,7 @@ import freechips.rocketchip.amba.axi4.{AXI4BundleParameters, AXI4Bundle}
  *
  * This file uses plain printf(...) format strings (no p interpolator).
  */
-class SimDRAMChisel(memSize: BigInt, lineSize: Int, memBase: BigInt,
+class SimMemorySim(memSize: BigInt, lineSize: Int, memBase: BigInt,
                     params: AXI4BundleParameters, chipId: Int) extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4Bundle(params))
@@ -61,7 +61,7 @@ class SimDRAMChisel(memSize: BigInt, lineSize: Int, memBase: BigInt,
         store_count := io.axi.aw.bits.len + 1.U
         store_size := io.axi.aw.bits.size
         wState := sWCollect
-        // printf("[SimDRAM] AW.fire id=%d addr=%x len=%d size=%d\n", io.axi.aw.bits.id, io.axi.aw.bits.addr, io.axi.aw.bits.len, io.axi.aw.bits.size)
+        printf("[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n", io.axi.aw.bits.id, io.axi.aw.bits.addr, io.axi.aw.bits.len, io.axi.aw.bits.size)
       }
     }
     is(sWCollect) {
@@ -79,14 +79,14 @@ class SimDRAMChisel(memSize: BigInt, lineSize: Int, memBase: BigInt,
             parts.reduce(_ | _)
           })
         mem.write(idx, newBeat)
-        // printf("[SimDRAM] W.fire data=%x strb=%x last=%d idx=%d addr=%x\n", io.axi.w.bits.data, io.axi.w.bits.strb, io.axi.w.bits.last, idx, store_addr)
+        // printf("[MemorySim] W.fire data=%x strb=%x last=%d idx=%d addr=%x\n", io.axi.w.bits.data, io.axi.w.bits.strb, io.axi.w.bits.last, idx, store_addr)
 
         store_addr := store_addr + (1.U << store_size)
         store_count := store_count - 1.U
 
         when(io.axi.w.bits.last || store_count === 1.U) {
           wState := sWResp
-          // printf("[SimDRAM] WRITE complete id=%d\n", store_id)
+          // printf("[MemorySim] WRITE complete id=%d\n", store_id)
         }
       }
     }
@@ -135,7 +135,7 @@ class SimDRAMChisel(memSize: BigInt, lineSize: Int, memBase: BigInt,
         mem_read_addr := addrToIndex(io.axi.ar.bits.addr)
         mem_read_en := true.B
         rState := sRRead
-        // printf("[SimDRAM] AR.fire id=%d addr=%x len=%d size=%d\n", io.axi.ar.bits.id, io.axi.ar.bits.addr, io.axi.ar.bits.len, io.axi.ar.bits.size)
+        printf("[MemorySim] AR.fire id=%d addr=%x len=%d size=%d\n", io.axi.ar.bits.id, io.axi.ar.bits.addr, io.axi.ar.bits.len, io.axi.ar.bits.size)
       }
     }
     is(sRRead) {
@@ -158,7 +158,7 @@ class SimDRAMChisel(memSize: BigInt, lineSize: Int, memBase: BigInt,
             // Last beat completed
             rState := sRIdle
           }
-          // printf("[SimDRAM] R.fire id=%d data=%x last=%d beats_left=%d\n", read_id, read_data, (read_count === 1.U).asUInt, read_count - 1.U)
+          printf("[MemorySim] R.fire id=%d data=%x last=%d beats_left=%d\n", read_id, read_data, (read_count === 1.U).asUInt, read_count - 1.U)
         }
       }
     }
