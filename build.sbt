@@ -1,4 +1,4 @@
-// See README.md for license details.
+import sbt.project 
 
 ThisBuild / scalaVersion     := "2.13.12"
 ThisBuild / version          := "0.1.0"
@@ -6,9 +6,12 @@ ThisBuild / organization     := "%ORGANIZATION%"
 
 val chiselVersion = "6.6.0"
 
+// ----------------------
+// Root project
+// ----------------------
 lazy val root = (project in file("."))
   .settings(
-    name := "memctrl",  
+    name := "memctrl",
     libraryDependencies ++= Seq(
       "org.chipsalliance" %% "chisel" % chiselVersion,
       "edu.berkeley.cs" %% "chiseltest" % "6.0.0" % "test",
