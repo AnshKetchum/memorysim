@@ -1,9 +1,10 @@
-package memctrl
+// package memctrl
 
-import chisel3._
-import chisel3.util._
-import chisel3.reflect.DataMirror
-import chisel3.experimental.Direction
+// import chisel3._
+// import chisel3.util._
+// import chisel3.reflect.DataMirror
+// import chisel3.experimental.Direction
+// import chipyard.iobinders._
 
 // import org.chipsalliance.cde.config.{Field, Config, Parameters}
 // import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImpLike}
@@ -25,11 +26,10 @@ import chisel3.experimental.Direction
 // import icenet.{NicLoopback, SimNetwork}
 // import chipyard._
 // import chipyard.clocking.{HasChipyardPRCI}
-// import chipyard.iobinders._
 
 // class WithBlackBoxMemorySim(additionalLatency: Int = 0) extends HarnessBinder({
 //   case (th: HasHarnessInstantiators, port: AXI4MemPort, chipId: Int) => {
-//     // TODO FIX: This currently makes each SimDRAM contain the entire memory space
+//     // TODO FIX: This currently makes each SimMemorySim contain the entire memory space
 //     val memSize = port.params.master.size
 //     val memBase = port.params.master.base
 //     val lineSize = 64 // cache block size
