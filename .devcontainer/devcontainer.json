@@ -1,0 +1,59 @@
+{
+  "name": "Memory Simulator Dev Environment",
+  "image": "chipyard-dev-env",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "BUILDKIT_INLINE_CACHE": "1"
+    },
+    "options": ["--network=host"]
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=memorysim-ivy-cache,target=/workspace/.ivy2,type=volume",
+    "source=memorysim-nix-store,target=/nix/store,type=volume"
+  ],
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "scalameta.metals",
+        "scala-lang.scala",
+        "ms-python.python",
+        "ms-python.black-formatter",
+        "ms-vscode.makefile-tools",
+        "redhat.vscode-yaml",
+        "ms-vscode.vscode-json",
+        "GitHub.copilot"
+      ],
+      "settings": {
+        "metals.javaHome": "/nix/store/*-zulu8*/lib/openjdk",
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "files.watcherExclude": {
+          "**/target/**": true,
+          "**/.ivy2/**": true,
+          "**/project/target/**": true,
+          "**/project/project/**": true
+        },
+        "search.exclude": {
+          "**/target": true,
+          "**/.ivy2": true,
+          "**/project/target": true,
+          "**/project/project": true
+        }
+      }
+    }
+  },
+  "forwardPorts": [8080, 3000, 8888],
+  "postCreateCommand": "echo 'Dev container ready! Run: nix develop' && ls -la",
+  "remoteUser": "root",
+  "features": {},
+  "containerEnv": {
+    "IVY_HOME": "/workspace/.ivy2",
+    "NIX_CONFIG": "connect-timeout = 300\nstalled-download-timeout = 300"
+  },
+  "runArgs": [
+    "--network=host"
+  ]
+}
