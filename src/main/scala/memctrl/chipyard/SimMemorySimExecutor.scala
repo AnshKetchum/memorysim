@@ -5,7 +5,7 @@ import chisel3.util._
 import freechips.rocketchip.amba.axi4.{AXI4BundleParameters, AXI4Bundle}
 
 /**
- * Improved SimMemorySim
+ * Improved SimMemorySimExecutor
  *
  * - Supports multi-beat AXI bursts (len+1 beats).
  * - Uses AW/W collection to form a multi-beat write and asserts B when done.
@@ -15,7 +15,7 @@ import freechips.rocketchip.amba.axi4.{AXI4BundleParameters, AXI4Bundle}
  *
  * This file uses plain printf(...) format strings (no p interpolator).
  */
-class SimMemorySim(memSize: BigInt, lineSize: Int, memBase: BigInt,
+class SimMemorySimExecutor(memSize: BigInt, lineSize: Int, memBase: BigInt,
                     params: AXI4BundleParameters, chipId: Int) extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4Bundle(params))
@@ -164,6 +164,4 @@ class SimMemorySim(memSize: BigInt, lineSize: Int, memBase: BigInt,
     }
   }
 
-  // Note: this is a simplification: SyncReadMem returns data next cycle; above logic properly handles this timing.
-  // For heavy concurrency / out-of-order IDs / multiple outstanding AR/AW with same IDs you'd need per-ID queues.
 }
