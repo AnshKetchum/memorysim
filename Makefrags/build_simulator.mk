@@ -1,12 +1,12 @@
 .PHONY: all clean verilog verilator-run
 
-SRC_DIR      := src
+SRC_DIR      := memorysim/memctrl/src
 VERILOG_DIR  := $(SRC_DIR)/main/resources/vsrc
 SIM_MAIN     := sim_main.cpp
 TOP_MODULE   := MultiChannelSystem
 
 # SBT command to run the Chisel elaboration using the legacy driver
-SBT_CMD      := sbt "runMain memctrl.Elaborate --target-dir $(VERILOG_DIR)"
+SBT_CMD      := sbt "memctrl/runMain memorysim.memctrl.Elaborate --target-dir $(VERILOG_DIR)"
 
 # Verilator command and flags
 VERILATOR    := verilator
@@ -41,10 +41,10 @@ verilog:
 
 
 verilator-trace: 
-	verilator --cc --exe --build -Mdir obj_dir -o V$(TOP_MODULE) src/main/resources/vsrc/MultiChannelSystem.sv ./sims/sim_trace.cpp
+	verilator --cc --exe --build -Mdir obj_dir -o V$(TOP_MODULE) $(SRC_DIR)/main/resources/vsrc/MultiChannelSystem.sv ./sims/sim_trace.cpp
 
 verilator-sanity-test:
-	verilator --cc --exe --build -Mdir obj_dir -o V$(TOP_MODULE) src/main/resources/vsrc/MultiChannelSystem.sv ./sims/sim_random.cpp
+	verilator --cc --exe --build -Mdir obj_dir -o V$(TOP_MODULE) $(SRC_DIR)/main/resources/vsrc/MultiChannelSystem.sv ./sims/sim_random.cpp
 	./$(TARGET)
 
 all: verilog verilator-trace
