@@ -1,6 +1,5 @@
 # Base image with Miniconda
 FROM continuumio/miniconda3:latest
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ------------------------------
@@ -22,11 +21,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set locale
-RUN locale-gen en_US.UTF-8
+# Fix locale setup - ensure it's in locale.gen first
+RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen && \
+    locale-gen en_US.UTF-8
+
+# Set locale environment variables
 ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US:en
 ENV LC_ALL=en_US.UTF-8
+
+# Set JVM encoding options to handle Unicode (fixes Shapeless error)
+ENV SBT_OPTS="-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dfile.encoding.pkg=UTF-8"
+ENV _JAVA_OPTIONS="-Dfile.encoding=UTF-8"
+ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"
 
 # Auto-activate base
 RUN conda config --set auto_activate_base true
@@ -46,6 +53,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
+# Make /workspace writable
+RUN mkdir -p /workspace && chown -R $USERNAME:$USERNAME /workspace
+
 USER $USERNAME
 WORKDIR /workspace
 
@@ -54,10 +64,16 @@ WORKDIR /workspace
 # ------------------------------
 ARG CHIPYARD_REPO=https://github.com/AnshKetchum/chipyard.git 
 ARG CHIPYARD_BRANCH=main 
+
 RUN git clone --branch $CHIPYARD_BRANCH $CHIPYARD_REPO chipyard 
  
 WORKDIR /workspace/chipyard 
-RUN chmod +x ./build-setup.sh && ./build-setup.sh -s 9
+
+# Ensure encoding environment is set for the build user too
+ENV SBT_OPTS="-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dfile.encoding.pkg=UTF-8"
+ENV _JAVA_OPTIONS="-Dfile.encoding=UTF-8"
+
+RUN chmod +x ./build-setup.sh && ./build-setup.sh -s 9 -s 10
 
 # ------------------------------
 # Default command

@@ -5,7 +5,9 @@
     "dockerfile": "Dockerfile",
     "context": "..",
     "args": {
-      "BUILDKIT_INLINE_CACHE": "1"
+      "BUILDKIT_INLINE_CACHE": "1",
+      "USER_UID": "1000",      // replace with your host UID
+      "USER_GID": "1000"       // replace with your host GID
     },
     "options": ["--network=host"]
   },
@@ -15,6 +17,8 @@
     "source=memorysim-nix-store,target=/nix/store,type=volume"
   ],
   "workspaceFolder": "/workspace",
+  "remoteUser": "devuser",
+  "postCreateCommand": "git config --global --add safe.directory /workspace && echo 'Dev container ready! Run: nix develop' && ls -la",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -46,14 +50,9 @@
     }
   },
   "forwardPorts": [8080, 3000, 8888],
-  "postCreateCommand": "echo 'Dev container ready! Run: nix develop' && ls -la",
-  "remoteUser": "root",
-  "features": {},
   "containerEnv": {
     "IVY_HOME": "/workspace/.ivy2",
     "NIX_CONFIG": "connect-timeout = 300\nstalled-download-timeout = 300"
   },
-  "runArgs": [
-    "--network=host"
-  ]
+  "runArgs": ["--network=host"]
 }
