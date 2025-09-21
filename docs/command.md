@@ -1,0 +1,1 @@
+make run-binary BINARY=/workspace/chipyard/.conda-env/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/memcpy.riscv -B | tee run.log
