@@ -1,4 +1,7 @@
 # Development targets
+check-format:
+	sbt scalafmtCheckAll
+	
 format:
 	sbt scalafmtAll
 

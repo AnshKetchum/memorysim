@@ -28,4 +28,4 @@ jobs:
             nix-store-${{ runner.os }}-
 
       - name: Check code formatting with scalafmt
-        run: nix develop --command sbt scalafmtCheckAll
+        run: nix develop --command make check-format

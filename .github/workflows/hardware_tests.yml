@@ -20,7 +20,7 @@ jobs:
         uses: cachix/install-nix-action@v27
 
       - name: Run sbt tests 
-        run: nix develop --command sbt test
+        run: nix develop --command make test
 
       - name: Clean 
         run: nix develop --command make clean
