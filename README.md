@@ -102,6 +102,9 @@ If you use MemorySim in your research, please cite:
 }
 ```
 
+## Resources
+- If interested in development, consider using the batteries included development [devcontainer](https://hub.docker.com/repository/docker/eyeamansh/memorysim-dev/general) associated with the repo!
+
 ## Acknowledgements
 
 Thanks to Professor Christopher Fletcher, Professor Sagar Karandikar, and Ph.D Tianrui Wei for their invaluable guidance through the process.
