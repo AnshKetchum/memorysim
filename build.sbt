@@ -10,7 +10,7 @@ val chiselVersion = "6.6.0"
 // ----------------------
 // memctrl core project
 // ----------------------
-lazy val memctrl = (project in file("memctrl"))
+lazy val memctrl = (project in file("memorysim/memctrl"))
   .settings(
     name := "memctrl",
     libraryDependencies ++= Seq(
@@ -34,14 +34,14 @@ lazy val memctrl = (project in file("memctrl"))
 // ----------------------
 // memorysim "integration" project
 // ----------------------
-lazy val integration = (project in file("memintegration"))
+lazy val integration = (project in file("memorysim/integration"))
   .dependsOn(memctrl) // integration builds on core
   .settings(
-    name := "memintegration"
+    name := "integration"
   )
 
 lazy val root = (project in file("."))
-  .aggregate(memctrl, memctrl2)
+  .aggregate(memctrl, integration)
   .settings(
     name := "memorysim"
   )
