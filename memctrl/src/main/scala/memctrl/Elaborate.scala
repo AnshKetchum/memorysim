@@ -9,7 +9,7 @@ case class Config(queueSize: Int, bankSchedulerPolicy: String, numChannels: Int,
 
 object Elaborate extends App {
   // Load queueSize from a JSON file (e.g., "config.json")
-  val jsonPath     = "src/main/config/config.json"
+  val jsonPath     = "memctrl/src/main/config/config.json"
   val jsonString   = new String(Files.readAllBytes(Paths.get(jsonPath)))
   val parsedConfig = decode[Config](jsonString) match {
     case Right(config) => config
