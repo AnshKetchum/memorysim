@@ -32,10 +32,10 @@ lazy val memctrl = (project in file("memctrl"))
   )
 
 // ----------------------
-// memctrl2 integration project
+// memorysim "integration" project
 // ----------------------
-lazy val memctrl2 = (project in file("memctrl2"))
+lazy val memorysim = (project in file("memorysim"))
   .dependsOn(memctrl) // integration builds on core
   .settings(
-    name := "memctrl2"
+    name := "memorysim"
   )
