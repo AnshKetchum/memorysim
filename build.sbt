@@ -34,8 +34,14 @@ lazy val memctrl = (project in file("memctrl"))
 // ----------------------
 // memorysim "integration" project
 // ----------------------
-lazy val memorysim = (project in file("memorysim"))
+lazy val integration = (project in file("memintegration"))
   .dependsOn(memctrl) // integration builds on core
+  .settings(
+    name := "memintegration"
+  )
+
+lazy val root = (project in file("."))
+  .aggregate(memctrl, memctrl2)
   .settings(
     name := "memorysim"
   )

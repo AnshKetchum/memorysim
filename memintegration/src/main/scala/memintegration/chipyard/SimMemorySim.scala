@@ -1,4 +1,4 @@
-// package memctrl
+// package memintegration
 
 // import chisel3._
 // import chisel3.experimental.IntParam

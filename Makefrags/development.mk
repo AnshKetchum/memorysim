@@ -6,4 +6,4 @@ format-test:
 	sbt scalafmtCheckAll
 
 test:
-	sbt test
+	sbt memctrl/test
