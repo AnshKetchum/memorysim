@@ -41,6 +41,11 @@ RUN conda config --set auto_activate_base true
 # Install conda-lock <1.5
 RUN conda install -c conda-forge 'conda-lock<1.5' -y
 
+# Install firtool
+RUN conda config --add channels ucb-bar && \
+    conda config --set channel_priority strict && \
+    conda install -y firtool
+
 # ------------------------------
 # Create a non-root user for VSCode
 # ------------------------------
@@ -69,11 +74,16 @@ RUN git clone --branch $CHIPYARD_BRANCH $CHIPYARD_REPO chipyard
  
 WORKDIR /workspace/chipyard 
 
+# Hack: for all directories to be trusted
+RUN git config --global --add safe.directory '*'
+
 # Ensure encoding environment is set for the build user too
 ENV SBT_OPTS="-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dfile.encoding.pkg=UTF-8"
 ENV _JAVA_OPTIONS="-Dfile.encoding=UTF-8"
 
+
 RUN chmod +x ./build-setup.sh && ./build-setup.sh -s 9 -s 10
+
 
 # ------------------------------
 # Default command
