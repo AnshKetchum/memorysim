@@ -23,20 +23,20 @@ class PhysicalMemoryResponse(params: MemoryConfigurationParameters) extends Bund
 }
 
 /** Generic Physical Memory I/O: decoupled command in, decoupled response out * */
-class PhysicalMemoryIO extends Bundle {
+class PhysicalMemoryIO(params: MemoryConfigurationParameters) extends Bundle {
 
   /** Input command from controller * */
-  val memCmd = Flipped(Decoupled(new PhysicalMemoryCommand))
+  val memCmd = Flipped(Decoupled(new PhysicalMemoryCommand(params)))
 
   /** Output response back to controller * */
-  val phyResp = Decoupled(new PhysicalMemoryResponse)
+  val phyResp = Decoupled(new PhysicalMemoryResponse(params))
 
   /** Output active sub-memories count * */
   val activeSubMemories = Output(UInt(32.W)) // Track number of active sub-memories
 }
 
 /** Memory Command interface (to external memory) * */
-class BankMemoryCommand(params: MemoryControllerParameters) extends Bundle {
+class BankMemoryCommand(params: MemoryConfigurationParameters) extends Bundle {
   val addr             = UInt(params.addressWidth.W)
   val data             = UInt(params.dataWidth.W)
   val cs               = Bool()
@@ -116,13 +116,13 @@ case class DRAMBankParameters(
 
 case class MemoryConfigurationParameters(
   globalCycleCountBits: Int = 64,
-  dataWidth: Int = 32,
-  addressWidth: Int = 32,
-  requestIDBits: Int = 64,
-  numberOfChannels: Int = 1,
-  numberOfRanks:    Int = 2,
-  numberOfBanks:    Int = 8,
-  memoryQueueSize:  Int = 256)
+  dataWidth:            Int = 32,
+  addressWidth:         Int = 32,
+  requestIDBits:        Int = 64,
+  numberOfChannels:     Int = 1,
+  numberOfRanks:        Int = 2,
+  numberOfBanks:        Int = 8,
+  memoryQueueSize:      Int = 256)
 
 case class LocalConfigurationParameters(
   channelIndex: Int = 0,
@@ -131,12 +131,12 @@ case class LocalConfigurationParameters(
 
 /** Base class for any non-bank module exposing a PhysicalMemoryIO interface
   */
-abstract class PhysicalMemoryModuleBase extends Module {
-  val io = IO(new PhysicalMemoryIO)
+abstract class PhysicalMemoryModuleBase(params: MemoryConfigurationParameters) extends Module {
+  val io = IO(new PhysicalMemoryIO(params))
 }
 
 /** Base class for the bank module
   */
-abstract class PhysicalBankModuleBase extends Module {
-  val io = IO(new PhysicalBankIO)
+abstract class PhysicalBankModuleBase(params: MemoryConfigurationParameters) extends Module {
+  val io = IO(new PhysicalBankIO(params))
 }

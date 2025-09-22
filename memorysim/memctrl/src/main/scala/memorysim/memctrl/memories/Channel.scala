@@ -9,7 +9,7 @@ class Channel(
   localConfig:      LocalConfigurationParameters,
   trackPerformance: Boolean = false,
   queueDepth:       Int = 256)
-    extends PhysicalMemoryModuleBase {
+    extends PhysicalMemoryModuleBase(params) {
 
   // ---- Command side: multi‐rank demux ----
   // Steer incoming commands into per‐rank FIFOs

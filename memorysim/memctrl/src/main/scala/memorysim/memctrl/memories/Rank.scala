@@ -11,7 +11,7 @@ class Rank(
   localConfig:      LocalConfigurationParameters,
   trackPerformance: Boolean = false,
   queueDepth:       Int = 256)
-    extends PhysicalMemoryModuleBase {
+    extends PhysicalMemoryModuleBase(params) {
 
   val lastColBank  = RegInit(0.U(32.W))
   val lastColCycle = RegInit(0.U(32.W))
@@ -33,11 +33,11 @@ class Rank(
   val banksWithTiming = Seq.tabulate(params.numberOfBanks) { idx =>
     val cfg     = localConfig.copy(bankIndex = idx)
     val bank    = Module(new DRAMBankWithWait(bankParams, params, cfg, trackPerformance))
-    val timer   = Module(new TimingEngine(bankParams))
+    val timer   = Module(new TimingEngine(bankParams, params))
     val deqPort = cmdDemux.io.deq(idx)
 
     // Create BankMemoryCommand with metadata
-    val stamped = Wire(Decoupled(new BankMemoryCommand))
+    val stamped = Wire(Decoupled(new BankMemoryCommand(params)))
 
     // Manually drive ready/valid
     stamped.valid := deqPort.valid
@@ -62,8 +62,8 @@ class Rank(
     }
 
     // Split the command manually
-    val stampedForTimer = Wire(Decoupled(new BankMemoryCommand))
-    val stampedForBank  = Wire(Decoupled(new BankMemoryCommand))
+    val stampedForTimer = Wire(Decoupled(new BankMemoryCommand(params)))
+    val stampedForBank  = Wire(Decoupled(new BankMemoryCommand(params)))
 
     // Connect from the shared stamped signal
     stampedForTimer.valid := stamped.valid
@@ -85,7 +85,7 @@ class Rank(
     bank.waitCycles := timer.io.waitCycles
 
     // Response queue (unchanged)
-    val respQ = Module(new Queue(new BankMemoryResponse, queueDepth))
+    val respQ = Module(new Queue(new BankMemoryResponse(params), queueDepth))
     respQ.io.enq.bits     := bank.io.phyResp.bits
     respQ.io.enq.valid    := bank.io.phyResp.valid
     bank.io.phyResp.ready := respQ.io.enq.ready
@@ -99,7 +99,7 @@ class Rank(
     (bank, respQ)
   }
 
-  val arb = Module(new RRArbiter(new BankMemoryResponse, params.numberOfBanks))
+  val arb = Module(new RRArbiter(new BankMemoryResponse(params), params.numberOfBanks))
   banksWithTiming.zipWithIndex.foreach { case ((_, q), i) => arb.io.in(i) <> q.io.deq }
 
   io.phyResp <> arb.io.out

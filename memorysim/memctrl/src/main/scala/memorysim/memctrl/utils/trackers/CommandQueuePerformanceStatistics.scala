@@ -11,13 +11,13 @@ import chisel3.util._
   *   - req_bits: the ControllerRequest transferred.
   *   - globalCycle: a cycle count for timestamping.
   */
-class CommandQueuePerformanceStatisticsInput(val params: MemoryConfigurationParameters)
+class CommandQueuePerformanceStatisticsInput(val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -26,14 +26,14 @@ class CommandQueuePerformanceStatisticsInput(val params: MemoryConfigurationPara
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val req_fire    = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val data        = Input(UInt(params.dataWidth.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
     val cs          = Input(Bool())
     val ras         = Input(Bool())
     val cas         = Input(Bool())
     val we          = Input(Bool())
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsInput.sv")
@@ -46,13 +46,13 @@ class CommandQueuePerformanceStatisticsInput(val params: MemoryConfigurationPara
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-class CommandQueuePerformanceStatisticsOutput(val params: MemoryConfigurationParameters)
+class CommandQueuePerformanceStatisticsOutput(val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -61,10 +61,10 @@ class CommandQueuePerformanceStatisticsOutput(val params: MemoryConfigurationPar
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val resp_fire   = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val data        = Input(UInt(params.dataWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsOutput.sv")

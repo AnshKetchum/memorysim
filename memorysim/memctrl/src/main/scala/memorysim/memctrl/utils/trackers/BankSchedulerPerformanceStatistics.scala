@@ -12,17 +12,17 @@ import chisel3.util._
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankSchedulerPerformanceStatisticsInput(
-  val rank: Int,
-  val bank: Int,
-  val params: MemoryConfigurationParameters)
+  val rank:      Int,
+  val bank:      Int,
+  val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
         "RANK"              -> rank,
         "BANK"              -> bank,
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -32,14 +32,13 @@ class BankSchedulerPerformanceStatisticsInput(
     val req_fire    = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/BankSchedulerPerformanceStatisticsInput.sv")
 }
-
 
 /** Monitors requests issued to physical memory.
   *
@@ -49,17 +48,17 @@ class BankSchedulerPerformanceStatisticsInput(
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
-  val rank: Int,
-  val bank: Int,
-  val params: MemoryConfigurationParameters)
+  val rank:      Int,
+  val bank:      Int,
+  val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
         "RANK"              -> rank,
         "BANK"              -> bank,
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -68,33 +67,32 @@ class BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val req_fire    = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val data        = Input(UInt(params.dataWidth.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
     val cs          = Input(Bool())
     val ras         = Input(Bool())
     val cas         = Input(Bool())
     val we          = Input(Bool())
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/BankSchedulerPhysicalMemoryRequestPerformanceStatistics.sv")
 }
 
-
 /** Monitors responses from physical memory. */
 class BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
-  val rank: Int,
-  val bank: Int,
-  val params: MemoryConfigurationParameters)
+  val rank:      Int,
+  val bank:      Int,
+  val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
         "RANK"              -> rank,
         "BANK"              -> bank,
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -103,10 +101,10 @@ class BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val resp_fire   = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val data        = Input(UInt(params.dataWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/BankSchedulerPhysicalMemoryResponsePerformanceStatistics.sv")
@@ -120,17 +118,17 @@ class BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
   *   - globalCycle: the global cycle counter.
   */
 class BankSchedulerPerformanceStatisticsOutput(
-  val rank: Int,
-  val bank: Int,
-  val params: MemoryConfigurationParameters)
+  val rank:      Int,
+  val bank:      Int,
+  val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
         "RANK"              -> rank,
         "BANK"              -> bank,
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -140,14 +138,13 @@ class BankSchedulerPerformanceStatisticsOutput(
     val resp_fire   = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/BankSchedulerPerformanceStatisticsOutput.sv")
 }
-
 
 /** Top-level performance statistics module for the command queue between the controller and physical memory.
   *
@@ -155,16 +152,19 @@ class BankSchedulerPerformanceStatisticsOutput(
   *   - in_fire and in_bits represent a successful (fire) input transaction.
   *   - out_fire and out_bits represent a successful (fire) output transaction.
   */
-class BankSchedulerPerformanceStatistics(localConfiguration: LocalConfigurationParameters, params: MemoryConfigurationParameters) extends Module {
+class BankSchedulerPerformanceStatistics(
+  localConfiguration: LocalConfigurationParameters,
+  params:             MemoryConfigurationParameters)
+    extends Module {
   val io = IO(new Bundle {
     val in_fire           = Input(Bool())
-    val in_bits           = Input(new ControllerRequest)
+    val in_bits           = Input(new ControllerRequest(params))
     val out_fire          = Input(Bool())
-    val out_bits          = Input(new ControllerResponse)
+    val out_bits          = Input(new ControllerResponse(params))
     val mem_request_fire  = Input(Bool())
-    val mem_request_bits  = Input(new PhysicalMemoryCommand)
+    val mem_request_bits  = Input(new PhysicalMemoryCommand(params))
     val mem_response_fire = Input(Bool())
-    val mem_response_bits = Input(new PhysicalMemoryResponse)
+    val mem_response_bits = Input(new PhysicalMemoryResponse(params))
   })
 
   // Global cycle counter (64 bits)

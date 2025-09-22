@@ -11,13 +11,13 @@ import chisel3.util._
   *   - req_bits: the ControllerRequest transferred.
   *   - globalCycle: a cycle count for timestamping.
   */
-class SystemQueuePerformanceStatisticsInput(val params: MemoryConfigurationParameters)
+class SystemQueuePerformanceStatisticsInput(val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -28,10 +28,10 @@ class SystemQueuePerformanceStatisticsInput(val params: MemoryConfigurationParam
     val req_fire    = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val wdata       = Input(UInt(params.dataWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val wdata       = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/SystemQueuePerformanceStatisticsInput.sv")
@@ -44,13 +44,13 @@ class SystemQueuePerformanceStatisticsInput(val params: MemoryConfigurationParam
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-class SystemQueuePerformanceStatisticsOutput(val params: MemoryConfigurationParameters)
+class SystemQueuePerformanceStatisticsOutput(val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "ADDRESS_WIDTH"     -> params.addressWidth,
-        "DATA_WIDTH"        -> params.dataWidth,
-        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
-        "REQUEST_ID_BITS"   -> params.requestIDBits
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -61,11 +61,11 @@ class SystemQueuePerformanceStatisticsOutput(val params: MemoryConfigurationPara
     val resp_fire   = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(params.addressWidth.W))
-    val wdata       = Input(UInt(params.dataWidth.W))
-    val data        = Input(UInt(params.dataWidth.W))
-    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
-    val request_id  = Input(UInt(params.requestIDBits.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val wdata       = Input(UInt(memParams.dataWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/SystemQueuePerformanceStatisticsOutput.sv")
@@ -80,9 +80,9 @@ class SystemQueuePerformanceStatisticsOutput(val params: MemoryConfigurationPara
 class SystemQueuePerformanceStatistics(params: MemoryConfigurationParameters) extends Module {
   val io = IO(new Bundle {
     val in_fire  = Input(Bool())
-    val in_bits  = Input(new ControllerRequest(params.dataWidth, params.addressWidth, params.requestIDBits))
+    val in_bits  = Input(new ControllerRequest(params))
     val out_fire = Input(Bool())
-    val out_bits = Input(new ControllerResponse(params.dataWidth, params.addressWidth, params.requestIDBits))
+    val out_bits = Input(new ControllerResponse(params))
   })
 
   // Global cycle counter (64 bits)
@@ -90,8 +90,8 @@ class SystemQueuePerformanceStatistics(params: MemoryConfigurationParameters) ex
   cycleCounter := cycleCounter + 1.U
 
   // Instantiate the BlackBox modules
-  val perfIn  = Module(new SystemQueuePerformanceStatisticsInput)
-  val perfOut = Module(new SystemQueuePerformanceStatisticsOutput)
+  val perfIn  = Module(new SystemQueuePerformanceStatisticsInput(params))
+  val perfOut = Module(new SystemQueuePerformanceStatisticsOutput(params))
 
   // Connect clock and reset
   perfIn.io.clk    := clock

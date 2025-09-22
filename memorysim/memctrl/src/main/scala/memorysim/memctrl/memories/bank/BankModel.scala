@@ -12,7 +12,7 @@ class DRAMBankWithWait(
   memConfig:        MemoryConfigurationParameters,
   localConfig:      LocalConfigurationParameters,
   trackPerformance: Boolean = false)
-    extends PhysicalBankModuleBase {
+    extends PhysicalBankModuleBase(memConfig) {
 
   // I/O
   val cmd        = io.memCmd  // Decoupled[BankMemoryCommand]
@@ -129,7 +129,7 @@ class DRAMBankWithWait(
 
   // optional performance tracking
   if (trackPerformance) {
-    val perf = Module(new BankPerformanceStatistics(localConfig, params))
+    val perf = Module(new BankPerformanceStatistics(localConfig, memConfig))
     perf.io.mem_request_fire  := io.memCmd.fire
     perf.io.mem_request_bits  := io.memCmd.bits
     perf.io.mem_response_fire := io.phyResp.fire

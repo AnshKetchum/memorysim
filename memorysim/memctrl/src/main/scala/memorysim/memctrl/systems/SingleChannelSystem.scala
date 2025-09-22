@@ -64,7 +64,7 @@ class SingleChannelSystem(
 
   // If performance tracking is enabled:
   if (params.trackPerformance) {
-    val perfStats = Module(new SystemQueuePerformanceStatistics)
+    val perfStats = Module(new SystemQueuePerformanceStatistics(params.memConfiguration))
     // Connect the performance monitor to the tap signals.
     perfStats.io.in_fire  := inputFire
     perfStats.io.in_bits  := ctrlReq

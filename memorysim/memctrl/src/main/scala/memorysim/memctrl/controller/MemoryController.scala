@@ -116,7 +116,7 @@ class MultiRankMemoryController(
 
   // ------ Optional performance tracker ------
   if (trackPerformance) {
-    val tracker = Module(new CommandQueuePerformanceStatistics)
+    val tracker = Module(new CommandQueuePerformanceStatistics(params))
     tracker.io.in_fire  := cmdQueue.io.enq.fire
     tracker.io.in_bits  := cmdQueue.io.enq.bits
     tracker.io.out_fire := io.phyResp.fire

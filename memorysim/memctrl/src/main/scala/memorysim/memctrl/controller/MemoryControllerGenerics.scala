@@ -26,7 +26,6 @@ class ControllerResponse(params: MemoryConfigurationParameters) extends Bundle {
   val request_id = UInt(params.requestIDBits.W)
 }
 
-
 case class MemoryControllerParameters(
   queueSize:      Int = 256,
   openPagePolicy: Boolean = true)

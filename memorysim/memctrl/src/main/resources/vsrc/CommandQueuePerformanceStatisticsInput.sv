@@ -1,9 +1,9 @@
-module #(
+module CommandQueuePerformanceStatisticsInput #(
     parameter int ADDRESS_WIDTH,
     parameter int DATA_WIDTH,
     parameter int GLOBAL_CYCLE_BITS,
     parameter int REQUEST_ID_BITS
-) CommandQueuePerformanceStatisticsInput(
+)(
     input wire clk,
     input wire reset,
     input wire req_fire,

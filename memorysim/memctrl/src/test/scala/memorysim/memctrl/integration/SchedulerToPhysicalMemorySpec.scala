@@ -12,11 +12,6 @@ class MemoryControllerIntegrationSpec extends AnyFreeSpec with Matchers {
     s"MemControllerFSM + $name" - {
       "should perform write/read/write/read sequences" in {
         simulate(new Module {
-          val io = IO(new Bundle {
-            val req  = Flipped(Decoupled(new ControllerRequest))
-            val resp = Decoupled(new ControllerResponse)
-          })
-
           val params      = DRAMBankParameters()
           val localConfig = LocalConfigurationParameters(
             channelIndex = 0,
@@ -24,6 +19,11 @@ class MemoryControllerIntegrationSpec extends AnyFreeSpec with Matchers {
             bankIndex = 0
           )
           val memParams   = MemoryConfigurationParameters()
+
+          val io = IO(new Bundle {
+            val req  = Flipped(Decoupled(new ControllerRequest(memParams)))
+            val resp = Decoupled(new ControllerResponse(memParams))
+          })
 
           val controller = Module(new ClosedPageBankScheduler(params, localConfig, memParams))
           val phys       = Module(instantiateMem)

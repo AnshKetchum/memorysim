@@ -14,7 +14,7 @@ class SystemRequest(val dataWidth: Int, val addrWidth: Int) extends Bundle {
 /** Updated top-level memory system I/O using the new names. */
 class MemorySystemIO(params: MemoryConfigurationParameters) extends Bundle {
   val in  = Flipped(Decoupled(new SystemRequest(params.dataWidth, params.addressWidth)))
-  val out = Decoupled(new ControllerResponse(params.dataWidth, params.addressSpaceSize, params.requestIDBits))
+  val out = Decoupled(new ControllerResponse(params))
 
   // Internals-Monitoring Signals
   val rankState         = Output(Vec(params.numberOfRanks, UInt(3.W)))
