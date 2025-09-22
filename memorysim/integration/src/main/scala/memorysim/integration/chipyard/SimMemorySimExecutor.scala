@@ -38,12 +38,14 @@ class SimMemorySimExecutor(
   val strbBits  = wordBytes
 
   require(wordBytes > 0, "wordBytes must be > 0")
-  require(dataBits == 32, "MultiChannelSystem currently supports 32-bit data width")
+  // require(dataBits == 32, "MultiChannelSystem currently supports 32-bit data width")
 
   // WARNING: Using default memory system parameters - you may want to configure these!
   // Default memory configuration - adjust for your simulation needs
   val memParams = SingleChannelMemoryConfigurationParams(
     memConfiguration = MemoryConfigurationParameters(
+      addressWidth = addrBits,
+      dataWidth = dataBits,
       numberOfChannels = 1, // WARNING: Default single channel
       numberOfRanks = 2,    // WARNING: Default 2 ranks
       numberOfBanks = 8,    // WARNING: Default 8 banks
