@@ -24,9 +24,9 @@ object DRAMOp {
   val SREF_INT        = 7
 }
 
-class TimingEngine(params: DRAMBankParameters) extends Module {
+class TimingEngine(params: DRAMBankParameters, memConfig: MemoryConfigurationParameters) extends Module {
   val io = IO(new Bundle {
-    val cmd        = Flipped(Decoupled(new BankMemoryCommand))
+    val cmd        = Flipped(Decoupled(new BankMemoryCommand(memConfig)))
     val waitCycles = Output(UInt(32.W))
   })
 

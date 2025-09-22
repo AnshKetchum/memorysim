@@ -30,7 +30,7 @@ class Channel(
   // ---- Response side: original RR‐arbiter logic ----
   // Gather each rank’s responses into a per-rank queue
   val respQueues = Seq.fill(params.numberOfRanks) {
-    Module(new Queue(new PhysicalMemoryResponse, entries = queueDepth))
+    Module(new Queue(new PhysicalMemoryResponse(params), entries = queueDepth))
   }
 
   for ((rankM, i) <- ranks.zipWithIndex) {
@@ -50,7 +50,7 @@ class Channel(
   }
 
   // Round-robin across all ranks’ respQueues
-  val respArb = Module(new RRArbiter(new PhysicalMemoryResponse, params.numberOfRanks))
+  val respArb = Module(new RRArbiter(new PhysicalMemoryResponse(params), params.numberOfRanks))
   for (i <- 0 until params.numberOfRanks) {
     respArb.io.in(i) <> respQueues(i).io.deq
   }

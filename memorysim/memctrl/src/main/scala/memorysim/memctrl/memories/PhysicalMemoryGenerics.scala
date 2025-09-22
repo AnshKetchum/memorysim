@@ -5,21 +5,21 @@ import chisel3._
 import chisel3.util._
 
 /** Memory Command interface (to external memory) * */
-class PhysicalMemoryCommand extends Bundle {
-  val addr       = UInt(32.W)
-  val data       = UInt(32.W)
+class PhysicalMemoryCommand(params: MemoryConfigurationParameters) extends Bundle {
+  val addr       = UInt(params.addressWidth.W)
+  val data       = UInt(params.dataWidth.W)
   val cs         = Bool()
   val ras        = Bool()
   val cas        = Bool()
   val we         = Bool()
-  val request_id = UInt(32.W)
+  val request_id = UInt(params.requestIDBits.W)
 }
 
 /** Physical Memory Response interface * */
-class PhysicalMemoryResponse extends Bundle {
-  val addr       = UInt(32.W)
-  val data       = UInt(32.W)
-  val request_id = UInt(32.W)
+class PhysicalMemoryResponse(params: MemoryConfigurationParameters) extends Bundle {
+  val addr       = UInt(params.addressWidth.W)
+  val data       = UInt(params.dataWidth.W)
+  val request_id = UInt(params.requestIDBits.W)
 }
 
 /** Generic Physical Memory I/O: decoupled command in, decoupled response out * */
@@ -36,33 +36,33 @@ class PhysicalMemoryIO extends Bundle {
 }
 
 /** Memory Command interface (to external memory) * */
-class BankMemoryCommand extends Bundle {
-  val addr             = UInt(32.W)
-  val data             = UInt(32.W)
+class BankMemoryCommand(params: MemoryControllerParameters) extends Bundle {
+  val addr             = UInt(params.addressWidth.W)
+  val data             = UInt(params.dataWidth.W)
   val cs               = Bool()
   val ras              = Bool()
   val cas              = Bool()
   val we               = Bool()
-  val request_id       = UInt(32.W)
+  val request_id       = UInt(params.requestIDBits.W)
   val lastColBankGroup = UInt(32.W)
   val lastColCycle     = UInt(32.W)
 }
 
 /** Physical Memory Response interface * */
-class BankMemoryResponse extends Bundle {
-  val addr       = UInt(32.W)
-  val data       = UInt(32.W)
-  val request_id = UInt(32.W)
+class BankMemoryResponse(params: MemoryConfigurationParameters) extends Bundle {
+  val addr       = UInt(params.addressWidth.W)
+  val data       = UInt(params.dataWidth.W)
+  val request_id = UInt(params.requestIDBits.W)
 }
 
 /** Physical Memory I/O for DRAMBank: decoupled command in, decoupled response out * */
-class PhysicalBankIO extends Bundle {
+class PhysicalBankIO(params: MemoryConfigurationParameters) extends Bundle {
 
   /** Input command from controller * */
-  val memCmd = Flipped(Decoupled(new BankMemoryCommand))
+  val memCmd = Flipped(Decoupled(new BankMemoryCommand(params)))
 
   /** Output response back to controller * */
-  val phyResp = Decoupled(new BankMemoryResponse)
+  val phyResp = Decoupled(new BankMemoryResponse(params))
 
   val waitCycles = Input(UInt(32.W)) // cycles to wait before processing
 
@@ -115,6 +115,10 @@ case class DRAMBankParameters(
 }
 
 case class MemoryConfigurationParameters(
+  globalCycleCountBits: Int = 64,
+  dataWidth: Int = 32,
+  addressWidth: Int = 32,
+  requestIDBits: Int = 64,
   numberOfChannels: Int = 1,
   numberOfRanks:    Int = 2,
   numberOfBanks:    Int = 8,

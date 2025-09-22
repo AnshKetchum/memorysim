@@ -14,10 +14,10 @@ class MultiRankMemoryController(
   trackPerformance: Boolean = false)
     extends Module {
   val io = IO(new Bundle {
-    val in      = Flipped(Decoupled(new ControllerRequest))
-    val out     = Decoupled(new ControllerResponse)
-    val memCmd  = Decoupled(new PhysicalMemoryCommand)
-    val phyResp = Flipped(Decoupled(new PhysicalMemoryResponse))
+    val in      = Flipped(Decoupled(new ControllerRequest(params)))
+    val out     = Decoupled(new ControllerResponse(params))
+    val memCmd  = Decoupled(new PhysicalMemoryCommand(params))
+    val phyResp = Flipped(Decoupled(new PhysicalMemoryResponse(params)))
 
     // Monitoring
     val rankState         = Output(Vec(params.numberOfRanks, UInt(3.W)))
@@ -29,15 +29,15 @@ class MultiRankMemoryController(
   })
 
   // ------ Global request & response FIFOs ------
-  val reqQueue  = Module(new Queue(new ControllerRequest, entries = controllerParams.queueSize))
-  val respQueue = Module(new Queue(new ControllerResponse, entries = controllerParams.queueSize))
+  val reqQueue  = Module(new Queue(new ControllerRequest(params), entries = controllerParams.queueSize))
+  val respQueue = Module(new Queue(new ControllerResponse(params), entries = controllerParams.queueSize))
   reqQueue.io.enq <> io.in
   io.out <> respQueue.io.deq
   io.reqQueueCount  := reqQueue.io.count
   io.respQueueCount := respQueue.io.count
 
   // ------ Physical command queue ------
-  val cmdQueue = Module(new Queue(new PhysicalMemoryCommand, entries = controllerParams.queueSize))
+  val cmdQueue = Module(new Queue(new PhysicalMemoryCommand(params), entries = controllerParams.queueSize))
   io.memCmd <> cmdQueue.io.deq
 
   // ------ Bank/FSM setup ------
@@ -69,7 +69,7 @@ class MultiRankMemoryController(
   }
 
   // ------ Command arbitration from FSMs ------
-  val cmdArb = Module(new RRArbiter(new PhysicalMemoryCommand, totalBankFSMs))
+  val cmdArb = Module(new RRArbiter(new PhysicalMemoryCommand(params), totalBankFSMs))
   for (i <- 0 until totalBankFSMs) {
     cmdArb.io.in(i) <> fsmVec(i).cmdOut
   }
@@ -106,7 +106,7 @@ class MultiRankMemoryController(
   io.phyResp.ready := fsmVec(respFlat).phyResp.ready
 
   // ------ Collect responses from FSMs ------
-  val respArb = Module(new RRArbiter(new ControllerResponse, totalBankFSMs))
+  val respArb = Module(new RRArbiter(new ControllerResponse(params), totalBankFSMs))
   for (i <- 0 until totalBankFSMs) {
     respArb.io.in(i) <> fsmVec(i).resp
   }

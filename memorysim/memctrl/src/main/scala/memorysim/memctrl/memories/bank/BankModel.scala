@@ -28,7 +28,7 @@ class DRAMBankWithWait(
   val state                                   = RegInit(sIdle)
 
   // latch incoming command
-  val pending = Reg(new BankMemoryCommand)
+  val pending = Reg(new BankMemoryCommand(memConfig))
 
   // countdown register
   val timer = RegInit(0.U(32.W))
@@ -38,7 +38,7 @@ class DRAMBankWithWait(
   val activeRow = RegInit(0.U(log2Ceil(params.numRows).W))
 
   // underlying memory array
-  val mem = Mem(params.addressSpaceSize, UInt(32.W))
+  val mem = Mem(params.addressSpaceSize, UInt(memConfig.dataWidth.W))
 
   // decode bits from pending
   val cs_p  = !pending.cs
@@ -129,7 +129,7 @@ class DRAMBankWithWait(
 
   // optional performance tracking
   if (trackPerformance) {
-    val perf = Module(new BankPerformanceStatistics(localConfig))
+    val perf = Module(new BankPerformanceStatistics(localConfig, params))
     perf.io.mem_request_fire  := io.memCmd.fire
     perf.io.mem_request_bits  := io.memCmd.bits
     perf.io.mem_response_fire := io.phyResp.fire

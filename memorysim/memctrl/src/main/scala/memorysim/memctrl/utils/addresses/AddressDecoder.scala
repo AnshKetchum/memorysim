@@ -5,7 +5,7 @@ import chisel3.util._
 
 class AddressDecoder(params: MemoryConfigurationParameters, dramParams: DRAMBankParameters) extends Module {
   val io = IO(new Bundle {
-    val addr         = Input(UInt(32.W))
+    val addr         = Input(UInt(params.addressWidth.W))
     val channelIndex = Output(UInt(log2Ceil(params.numberOfChannels).max(1).W))
     val bankIndex    = Output(UInt(log2Ceil(params.numberOfBanks).max(1).W))
     val rankIndex    = Output(UInt(log2Ceil(params.numberOfRanks).max(1).W))

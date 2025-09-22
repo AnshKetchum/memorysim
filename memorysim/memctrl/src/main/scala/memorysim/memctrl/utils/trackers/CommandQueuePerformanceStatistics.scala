@@ -11,19 +11,19 @@ import chisel3.util._
   *   - req_bits: the ControllerRequest transferred.
   *   - globalCycle: a cycle count for timestamping.
   */
-class CommandQueuePerformanceStatisticsInput extends BlackBox with HasBlackBoxResource {
+class CommandQueuePerformanceStatisticsInput(params: MemoryConfigurationParameters) extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val req_fire    = Input(Bool())
-    val addr        = Input(UInt(32.W))
-    val data        = Input(UInt(32.W))
+    val addr        = Input(UInt(params.addressWidth.W))
+    val data        = Input(UInt(params.dataWidth.W))
     val cs          = Input(Bool())
     val ras         = Input(Bool())
     val cas         = Input(Bool())
     val we          = Input(Bool())
-    val globalCycle = Input(UInt(64.W))
-    val request_id  = Input(UInt(32.W))
+    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
+    val request_id  = Input(UInt(params.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsInput.sv")
@@ -36,15 +36,15 @@ class CommandQueuePerformanceStatisticsInput extends BlackBox with HasBlackBoxRe
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-class CommandQueuePerformanceStatisticsOutput extends BlackBox with HasBlackBoxResource {
+class CommandQueuePerformanceStatisticsOutput(params: MemoryConfigurationParameters) extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val resp_fire   = Input(Bool())
-    val addr        = Input(UInt(32.W))
-    val data        = Input(UInt(32.W))
-    val globalCycle = Input(UInt(64.W))
-    val request_id  = Input(UInt(32.W))
+    val addr        = Input(UInt(params.addressWidth.W))
+    val data        = Input(UInt(params.dataWidth.W))
+    val globalCycle = Input(UInt(params.globalCycleCountBits.W))
+    val request_id  = Input(UInt(params.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsOutput.sv")
@@ -56,21 +56,21 @@ class CommandQueuePerformanceStatisticsOutput extends BlackBox with HasBlackBoxR
   *   - in_fire and in_bits represent a successful (fire) input transaction.
   *   - out_fire and out_bits represent a successful (fire) output transaction.
   */
-class CommandQueuePerformanceStatistics extends Module {
+class CommandQueuePerformanceStatistics(params: MemoryConfigurationParameters) extends Module {
   val io = IO(new Bundle {
     val in_fire  = Input(Bool())
-    val in_bits  = Input(new PhysicalMemoryCommand)
+    val in_bits  = Input(new PhysicalMemoryCommand(params))
     val out_fire = Input(Bool())
-    val out_bits = Input(new PhysicalMemoryResponse)
+    val out_bits = Input(new PhysicalMemoryResponse(params))
   })
 
   // Global cycle counter (64 bits)
-  val cycleCounter = RegInit(0.U(64.W))
+  val cycleCounter = RegInit(0.U(params.globalCycleCountBits.W))
   cycleCounter := cycleCounter + 1.U
 
   // Instantiate the BlackBox modules
-  val perfIn  = Module(new CommandQueuePerformanceStatisticsInput)
-  val perfOut = Module(new CommandQueuePerformanceStatisticsOutput)
+  val perfIn  = Module(new CommandQueuePerformanceStatisticsInput(params))
+  val perfOut = Module(new CommandQueuePerformanceStatisticsOutput(params))
 
   // Connect clock and reset
   perfIn.io.clk    := clock

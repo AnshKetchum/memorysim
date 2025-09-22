@@ -11,8 +11,8 @@ class MultiRankCmdQueue(
   depth:      Int)
     extends Module {
   val io = IO(new Bundle {
-    val enq    = Flipped(Decoupled(new PhysicalMemoryCommand))
-    val deq    = Vec(numRanks, Decoupled(new PhysicalMemoryCommand))
+    val enq    = Flipped(Decoupled(new PhysicalMemoryCommand(params)))
+    val deq    = Vec(numRanks, Decoupled(new PhysicalMemoryCommand(params)))
     val counts = Output(Vec(numRanks, UInt(log2Ceil(depth + 1).W)))
   })
 
@@ -23,7 +23,7 @@ class MultiRankCmdQueue(
 
   // 2) Instantiate one Queue per rank
   val queues = Seq.fill(numRanks) {
-    Module(new Queue(new PhysicalMemoryCommand, entries = depth))
+    Module(new Queue(new PhysicalMemoryCommand(params), entries = depth))
   }
 
   // 3) Default wiring

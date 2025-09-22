@@ -17,7 +17,7 @@ class MultiChannelSystem(
   decoder.io.addr := io.in.bits.addr
 
   // Shared request ID counter
-  val requestId = RegInit(0.U(32.W))
+  val requestId = RegInit(0.U(params.memConfiguration.requestIDBits.W))
   val inputFire = io.in.valid && io.in.ready
   when(inputFire) { requestId := requestId + 1.U }
 

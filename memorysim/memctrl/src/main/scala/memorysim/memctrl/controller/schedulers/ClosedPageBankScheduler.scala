@@ -11,10 +11,10 @@ class ClosedPageBankScheduler(
   trackPerformance:   Boolean = false)
     extends Module {
   val io = IO(new Bundle {
-    val req      = Flipped(Decoupled(new ControllerRequest))
-    val resp     = Decoupled(new ControllerResponse)
-    val cmdOut   = Decoupled(new PhysicalMemoryCommand)
-    val phyResp  = Flipped(Decoupled(new PhysicalMemoryResponse))
+    val req      = Flipped(Decoupled(new ControllerRequest(memoryConfig)))
+    val resp     = Decoupled(new ControllerResponse(memoryConfig))
+    val cmdOut   = Decoupled(new PhysicalMemoryCommand(memoryConfig))
+    val phyResp  = Flipped(Decoupled(new PhysicalMemoryResponse(memoryConfig)))
     val stateOut = Output(UInt(3.W))
   })
 
@@ -39,7 +39,7 @@ class ClosedPageBankScheduler(
 
   // --------------------------------------------------
   // Latch incoming request fields
-  val reqReg          = Reg(new ControllerRequest)
+  val reqReg          = Reg(new ControllerRequest(memoryConfig))
   val reqIsRead       = RegInit(false.B)
   val reqIsWrite      = RegInit(false.B)
   val reqAddrReg      = RegInit(0.U(32.W))
@@ -94,7 +94,7 @@ class ClosedPageBankScheduler(
 
   // --------------------------------------------------
   // Command register default
-  val cmdReg = Wire(new PhysicalMemoryCommand)
+  val cmdReg = Wire(new PhysicalMemoryCommand(memoryConfig))
   cmdReg.addr       := reqAddrReg
   cmdReg.data       := reqWdataReg
   cmdReg.cs         := true.B
@@ -109,7 +109,7 @@ class ClosedPageBankScheduler(
 
   // --------------------------------------------------
   // Response register
-  val respReg = Wire(new ControllerResponse)
+  val respReg = Wire(new ControllerResponse(memoryConfig))
   respReg.addr       := reqAddrReg
   respReg.wr_en      := reqIsWrite
   respReg.rd_en      := reqIsRead
@@ -307,7 +307,7 @@ class ClosedPageBankScheduler(
   // --------------------------------------------------
   // Performance tracker
   if (trackPerformance) {
-    val perf = Module(new BankSchedulerPerformanceStatistics(localConfiguration))
+    val perf = Module(new BankSchedulerPerformanceStatistics(localConfiguration, memoryConfig))
     perf.io.in_fire           := io.req.fire
     perf.io.in_bits           := io.req.bits
     perf.io.out_fire          := io.resp.fire
