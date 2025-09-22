@@ -13,12 +13,16 @@ import chisel3.util._
   */
 class BankSchedulerPerformanceStatisticsInput(
   val rank: Int,
-  val bank: Int, 
+  val bank: Int,
   val params: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "RANK" -> rank,
-        "BANK" -> bank
+        "RANK"              -> rank,
+        "BANK"              -> bank,
+        "ADDRESS_WIDTH"     -> params.addressWidth,
+        "DATA_WIDTH"        -> params.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> params.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -36,6 +40,7 @@ class BankSchedulerPerformanceStatisticsInput(
   addResource("/vsrc/BankSchedulerPerformanceStatisticsInput.sv")
 }
 
+
 /** Monitors requests issued to physical memory.
   *
   * Expects:
@@ -45,12 +50,16 @@ class BankSchedulerPerformanceStatisticsInput(
   */
 class BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
   val rank: Int,
-  val bank: Int, 
+  val bank: Int,
   val params: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "RANK" -> rank,
-        "BANK" -> bank
+        "RANK"              -> rank,
+        "BANK"              -> bank,
+        "ADDRESS_WIDTH"     -> params.addressWidth,
+        "DATA_WIDTH"        -> params.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> params.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -72,21 +81,20 @@ class BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
   addResource("/vsrc/BankSchedulerPhysicalMemoryRequestPerformanceStatistics.sv")
 }
 
-/** Monitors requests issued to physical memory.
-  *
-  * Expects:
-  *   - req_fire: asserted when a valid input request is transferred.
-  *   - req_bits: the ControllerRequest transferred.
-  *   - globalCycle: a cycle count for timestamping.
-  */
+
+/** Monitors responses from physical memory. */
 class BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
   val rank: Int,
-  val bank: Int, 
+  val bank: Int,
   val params: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "RANK" -> rank,
-        "BANK" -> bank
+        "RANK"              -> rank,
+        "BANK"              -> bank,
+        "ADDRESS_WIDTH"     -> params.addressWidth,
+        "DATA_WIDTH"        -> params.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> params.requestIDBits
       )
     )
     with HasBlackBoxResource {
@@ -111,7 +119,7 @@ class BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-  class BankSchedulerPerformanceStatisticsOutput(
+class BankSchedulerPerformanceStatisticsOutput(
   val rank: Int,
   val bank: Int,
   val params: MemoryConfigurationParameters)
@@ -167,25 +175,29 @@ class BankSchedulerPerformanceStatistics(localConfiguration: LocalConfigurationP
   val perfIn           = Module(
     new BankSchedulerPerformanceStatisticsInput(
       localConfiguration.rankIndex,
-      localConfiguration.bankIndex
+      localConfiguration.bankIndex,
+      params
     )
   )
   val perfOut          = Module(
     new BankSchedulerPerformanceStatisticsOutput(
       localConfiguration.rankIndex,
-      localConfiguration.bankIndex
+      localConfiguration.bankIndex,
+      params
     )
   )
   val perfMemRequests  = Module(
     new BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
       localConfiguration.rankIndex,
-      localConfiguration.bankIndex
+      localConfiguration.bankIndex,
+      params
     )
   )
   val perfMemResponses = Module(
     new BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
       localConfiguration.rankIndex,
-      localConfiguration.bankIndex
+      localConfiguration.bankIndex,
+      params
     )
   )
 

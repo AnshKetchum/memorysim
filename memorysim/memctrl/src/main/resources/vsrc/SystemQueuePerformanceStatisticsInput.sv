@@ -1,13 +1,18 @@
-module SystemQueuePerformanceStatisticsInput(
+module SystemQueuePerformanceStatisticsInput #(
+    parameter int ADDRESS_WIDTH,
+    parameter int DATA_WIDTH,
+    parameter int GLOBAL_CYCLE_BITS,
+    parameter int REQUEST_ID_BITS
+)(
     input wire clk,
     input wire reset,
     input wire req_fire,
     input wire rd_en,
     input wire wr_en,
-    input wire [31:0] addr,
-    input wire [31:0] wdata,
-    input wire [63:0] globalCycle,
-    input wire [31:0] request_id
+    input wire [ADDRESS_WIDTH-1:0] addr,
+    input wire [DATA_WIDTH-1:0] wdata,
+    input wire [GLOBAL_CYCLE_BITS-1:0] globalCycle,
+    input wire [REQUEST_ID_BITS-1:0] request_id
 );
     integer file;
     initial begin

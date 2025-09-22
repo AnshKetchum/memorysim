@@ -11,7 +11,17 @@ import chisel3.util._
   *   - req_bits: the ControllerRequest transferred.
   *   - globalCycle: a cycle count for timestamping.
   */
-class CommandQueuePerformanceStatisticsInput(params: MemoryConfigurationParameters) extends BlackBox with HasBlackBoxResource {
+class CommandQueuePerformanceStatisticsInput(val params: MemoryConfigurationParameters)
+    extends BlackBox(
+      Map(
+        "ADDRESS_WIDTH"     -> params.addressWidth,
+        "DATA_WIDTH"        -> params.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> params.requestIDBits
+      )
+    )
+    with HasBlackBoxResource {
+
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
@@ -36,7 +46,17 @@ class CommandQueuePerformanceStatisticsInput(params: MemoryConfigurationParamete
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-class CommandQueuePerformanceStatisticsOutput(params: MemoryConfigurationParameters) extends BlackBox with HasBlackBoxResource {
+class CommandQueuePerformanceStatisticsOutput(val params: MemoryConfigurationParameters)
+    extends BlackBox(
+      Map(
+        "ADDRESS_WIDTH"     -> params.addressWidth,
+        "DATA_WIDTH"        -> params.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> params.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> params.requestIDBits
+      )
+    )
+    with HasBlackBoxResource {
+
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
