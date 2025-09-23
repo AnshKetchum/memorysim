@@ -63,6 +63,24 @@ class SimMemorySimExecutor(
     bankIndex = 0     // WARNING: Default to bank 0
   )
 
+  // Print compile-time parameters (these are known at elaboration)
+  println(s"[MemorySim] COMPILE-TIME PARAMS:")
+  println(s"  memSize=${memSize} lineSize=${lineSize} memBase=0x${memBase.toString(16)} chipId=${chipId}")
+  println(s"  addrBits=${addrBits} dataBits=${dataBits} wordBytes=${wordBytes} strbBits=${strbBits}")
+  println(s"  AXI params: idBits=${params.idBits}")
+  println(
+    s"  Memory config: addressWidth=${memParams.memConfiguration.addressWidth} dataWidth=${memParams.memConfiguration.dataWidth}"
+  )
+  println(
+    s"  numberOfChannels=${memParams.memConfiguration.numberOfChannels} numberOfRanks=${memParams.memConfiguration.numberOfRanks} numberOfBanks=${memParams.memConfiguration.numberOfBanks}"
+  )
+  println(
+    s"  memoryQueueSize=${memParams.memConfiguration.memoryQueueSize} requestIDBits=${memParams.memConfiguration.requestIDBits}"
+  )
+  println(
+    s"  Local config: channelIndex=${localConfig.channelIndex} rankIndex=${localConfig.rankIndex} bankIndex=${localConfig.bankIndex}"
+  )
+
   // Instantiate the MultiChannelSystem
   val memSys = Module(new MultiChannelSystem(memParams, localConfig))
 
@@ -169,9 +187,10 @@ class SimMemorySimExecutor(
   val max_burst_len     = 256
   val read_buffer       = Reg(Vec(max_burst_len, UInt(dataBits.W)))
   val read_buffer_valid = Reg(Vec(max_burst_len, Bool()))
-  
+
   // Track which beats we've requested to handle the address mismatch issue
   val read_beats_remaining = RegInit(0.U(8.W))
+  val read_timeout_counter = RegInit(0.U(16.W)) // Add timeout counter
 
   // Initialize buffer valid bits
   for (i <- 0 until max_burst_len) {
@@ -206,6 +225,7 @@ class SimMemorySimExecutor(
         read_responses_received := 0.U
         read_beats_sent         := 0.U
         read_beats_remaining    := io.axi.ar.bits.len + 1.U
+        read_timeout_counter    := 0.U
 
         // Clear buffer valid bits for this burst
         for (i <- 0 until max_burst_len) {
@@ -230,7 +250,7 @@ class SimMemorySimExecutor(
           read_beats_issued,
           read_addr
         )
-        
+
         read_beats_issued := read_beats_issued + 1.U
         read_addr         := read_addr + (1.U << read_size)
 
@@ -241,6 +261,9 @@ class SimMemorySimExecutor(
       }
     }
     is(sRCollect) {
+      // Increment timeout counter
+      read_timeout_counter := read_timeout_counter + 1.U
+
       // Collect responses from memory system
       when(memSys.io.out.fire && memSys.io.out.bits.rd_en) {
         // For simplicity, assume responses come back in order (beat index = read_responses_received)
@@ -249,12 +272,14 @@ class SimMemorySimExecutor(
         read_buffer(beat_index)       := memSys.io.out.bits.data
         read_buffer_valid(beat_index) := true.B
         read_responses_received       := read_responses_received + 1.U
+        read_timeout_counter          := 0.U // Reset timeout on response
 
         printf(
-          "[MemorySim] Read response %d: data=%x addr=%x (need %d total)\n",
+          "[MemorySim] Read response %d: data=%x addr=%x req_id=%d (need %d total)\n",
           beat_index,
           memSys.io.out.bits.data,
           memSys.io.out.bits.addr,
+          memSys.io.out.bits.request_id,
           read_count
         )
       }
@@ -276,10 +301,35 @@ class SimMemorySimExecutor(
           printf("[MemorySim] Read burst complete id=%d\n", read_id)
         }
       }
-      
-      // Debug: Check if we're stuck waiting
-      when(read_responses_received >= read_count && read_beats_sent >= read_count) {
-        printf("[MemorySim] ERROR: Should have completed burst but still in sRCollect!\n")
+
+      // Timeout detection - if we've been waiting too long, force completion
+      when(read_timeout_counter > 10000.U) {
+        printf("[MemorySim] TIMEOUT: Forcing read burst completion after waiting too long\n")
+        printf(
+          "[MemorySim] Expected: %d responses, Got: %d responses, Sent: %d beats\n",
+          read_count,
+          read_responses_received,
+          read_beats_sent
+        )
+
+        // Fill remaining buffer entries with zeros to allow completion
+        for (i <- 0 until max_burst_len) {
+          when(i.U >= read_responses_received && i.U < read_count) {
+            read_buffer_valid(i.U) := true.B
+            read_buffer(i.U)       := 0.U
+          }
+        }
+        read_responses_received := read_count
+      }
+
+      // Debug: Check if we're stuck waiting and have capacity to receive more responses
+      when(read_responses_received < read_count && !memSys.io.out.valid) {
+        printf(
+          "[MemorySim] DEBUG: Waiting for response %d/%d, memSys.out.valid=%d\n",
+          read_responses_received,
+          read_count,
+          memSys.io.out.valid.asUInt
+        )
       }
     }
   }
@@ -297,9 +347,9 @@ class SimMemorySimExecutor(
 
   // Address calculation - FIXED: Use current address being processed
   memSys.io.in.bits.addr := Mux(
-    mem_req_is_write, 
-    store_addr,  // Current write address
-    read_addr    // Current read address
+    mem_req_is_write,
+    store_addr, // Current write address
+    read_addr   // Current read address
   )
 
   // Write data (with strobe handling like original)
@@ -318,8 +368,8 @@ class SimMemorySimExecutor(
   )
   memSys.io.in.bits.wdata := maskedWriteData
 
-  // Always ready to accept responses
-  memSys.io.out.ready := true.B
+  // Ready to accept responses only when we can process them
+  memSys.io.out.ready := (rState === sRCollect) || (wState === sWWaitResp)
 
   // ---- Debug Output Connections ----
   io.debug.rankState      := memSys.io.rankState
@@ -328,6 +378,13 @@ class SimMemorySimExecutor(
   io.debug.activeRanks    := memSys.io.activeRanks
 
   // Debug prints
+  when(memSys.io.in.valid && !memSys.io.in.ready) {
+    printf(
+      "[MemorySim] MemSys BACKPRESSURE: req not ready for addr=%x\n",
+      memSys.io.in.bits.addr
+    )
+  }
+
   when(memSys.io.in.fire) {
     printf(
       "[MemorySim] MemSys req: wr=%d rd=%d addr=%x data=%x\n",
@@ -336,6 +393,11 @@ class SimMemorySimExecutor(
       memSys.io.in.bits.addr,
       memSys.io.in.bits.wdata
     )
+  }
+
+  // Debug: Track which addresses we've requested vs received responses for
+  when(mem_req_is_read && memSys.io.in.ready) {
+    printf("[MemorySim] READ REQ ACCEPTED: addr=%x beat=%d\n", memSys.io.in.bits.addr, read_beats_issued)
   }
 
   when(memSys.io.out.fire) {
@@ -350,13 +412,17 @@ class SimMemorySimExecutor(
   }
 
   printf(
-    "[MemorySim] wState=%d rState=%d mem_req_wr=%d mem_req_rd=%d active_ranks=%d req_q=%d resp_q=%d\n",
+    "[MemorySim] wState=%d rState=%d mem_req_wr=%d mem_req_rd=%d active_ranks=%d req_q=%d resp_q=%d read_beats_iss=%d read_resp_rcv=%d read_beats_sent=%d read_count=%d\n",
     wState.asUInt,
     rState.asUInt,
     mem_req_is_write.asUInt,
     mem_req_is_read.asUInt,
     io.debug.activeRanks,
     io.debug.reqQueueCount,
-    io.debug.respQueueCount
+    io.debug.respQueueCount,
+    read_beats_issued,
+    read_responses_received,
+    read_beats_sent,
+    read_count
   )
 }
