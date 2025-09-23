@@ -39,9 +39,10 @@ class OpenPageBankScheduler(
 
   // --------------------------------------------------
   // Track currently open row for this bank
-  val rowBits    = 32 - (log2Ceil(memoryConfig.numberOfRanks) + log2Ceil(memoryConfig.numberOfBanks))
-  val invalidRow = Fill(rowBits, 1.U)
-  val openRow    = RegInit(invalidRow)
+  val rowBits      = 32 - (log2Ceil(memoryConfig.numberOfRanks) + log2Ceil(memoryConfig.numberOfBanks))
+  // store open row and an explicit valid bit so reset values are literal constants
+  val openRow      = Reg(UInt(rowBits.W))
+  val openRowValid = RegInit(false.B)
 
   // --------------------------------------------------
   // Latch incoming request fields
@@ -139,7 +140,7 @@ class OpenPageBankScheduler(
           reqIDReg   := refreshReqId
           reqAddrReg := refreshAddr
           state      := sRefresh
-        }.elsewhen(openRow =/= reqRow) {
+        }.elsewhen(!openRowValid || (openRow =/= reqRow)) {
           state := sActivate
         }.elsewhen(reqIsRead) {
           state := sRead
@@ -159,6 +160,7 @@ class OpenPageBankScheduler(
       }
       when(sentCmd && io.phyResp.fire) {
         openRow      := reqRow
+        openRowValid := true.B
         lastActivate := cycleCounter
         sentCmd      := false.B
         state        := Mux(reqIsRead, sRead, sWrite)
