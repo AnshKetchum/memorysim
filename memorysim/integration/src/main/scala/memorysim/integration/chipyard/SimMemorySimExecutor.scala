@@ -74,6 +74,7 @@ class SimMemorySimExecutor(
 
   val store_id                = RegInit(0.U(params.idBits.W))
   val store_addr              = RegInit(0.U(addrBits.W))
+  val store_base_addr         = RegInit(0.U(addrBits.W)) // Track original burst address
   val store_count             = RegInit(0.U(8.W))
   val store_size              = RegInit(0.U(3.W))
   val write_beats_issued      = RegInit(0.U(8.W))
@@ -92,6 +93,7 @@ class SimMemorySimExecutor(
       when(io.axi.aw.fire) {
         store_id                := io.axi.aw.bits.id
         store_addr              := io.axi.aw.bits.addr
+        store_base_addr         := io.axi.aw.bits.addr
         store_count             := io.axi.aw.bits.len + 1.U
         store_size              := io.axi.aw.bits.size
         write_beats_issued      := 0.U
@@ -108,15 +110,24 @@ class SimMemorySimExecutor(
       }
     }
     is(sWCollect) {
-      when(io.axi.w.fire && memSys.io.in.ready) {
-        store_addr              := store_addr + (1.U << store_size)
-        store_count             := store_count - 1.U
+      when(io.axi.w.fire) {
         write_beats_issued      := write_beats_issued + 1.U
         write_responses_pending := write_responses_pending + 1.U
+        store_addr              := store_addr + (1.U << store_size)
+        store_count             := store_count - 1.U
+
+        printf(
+          "[MemorySim] W.fire beat=%d addr=%x data=%x strb=%x last=%d\n",
+          write_beats_issued,
+          store_addr,
+          io.axi.w.bits.data,
+          io.axi.w.bits.strb,
+          io.axi.w.bits.last.asUInt
+        )
 
         when(io.axi.w.bits.last || store_count === 1.U) {
           wState := sWWaitResp
-          printf("[MemorySim] Write burst issued, waiting for %d responses\n", write_responses_pending + 1.U)
+          printf("[MemorySim] Write burst issued, waiting for %d responses\n", write_responses_pending)
         }
       }
     }
@@ -124,6 +135,8 @@ class SimMemorySimExecutor(
       // Wait for all memory system responses
       when(memSys.io.out.fire && memSys.io.out.bits.wr_en) {
         write_responses_pending := write_responses_pending - 1.U
+
+        printf("[MemorySim] Write response received, %d remaining\n", write_responses_pending - 1.U)
 
         when(write_responses_pending === 1.U) {
           wState := sWResp
@@ -145,6 +158,7 @@ class SimMemorySimExecutor(
 
   val read_id                 = RegInit(0.U(params.idBits.W))
   val read_addr               = RegInit(0.U(addrBits.W))
+  val read_base_addr          = RegInit(0.U(addrBits.W)) // Track original burst address
   val read_count              = RegInit(0.U(8.W))
   val read_size               = RegInit(0.U(3.W))
   val read_beats_issued       = RegInit(0.U(8.W))
@@ -155,6 +169,9 @@ class SimMemorySimExecutor(
   val max_burst_len     = 256
   val read_buffer       = Reg(Vec(max_burst_len, UInt(dataBits.W)))
   val read_buffer_valid = Reg(Vec(max_burst_len, Bool()))
+  
+  // Track which beats we've requested to handle the address mismatch issue
+  val read_beats_remaining = RegInit(0.U(8.W))
 
   // Initialize buffer valid bits
   for (i <- 0 until max_burst_len) {
@@ -182,11 +199,13 @@ class SimMemorySimExecutor(
       when(io.axi.ar.fire) {
         read_id                 := io.axi.ar.bits.id
         read_addr               := io.axi.ar.bits.addr
+        read_base_addr          := io.axi.ar.bits.addr
         read_count              := io.axi.ar.bits.len + 1.U
         read_size               := io.axi.ar.bits.size
         read_beats_issued       := 0.U
         read_responses_received := 0.U
         read_beats_sent         := 0.U
+        read_beats_remaining    := io.axi.ar.bits.len + 1.U
 
         // Clear buffer valid bits for this burst
         for (i <- 0 until max_burst_len) {
@@ -206,10 +225,18 @@ class SimMemorySimExecutor(
     is(sRIssue) {
       // Issue memory read requests for the entire burst
       when(memSys.io.in.ready && (read_beats_issued < read_count)) {
+        printf(
+          "[MemorySim] Issuing read request beat=%d addr=%x\n",
+          read_beats_issued,
+          read_addr
+        )
+        
         read_beats_issued := read_beats_issued + 1.U
+        read_addr         := read_addr + (1.U << read_size)
 
         when(read_beats_issued === (read_count - 1.U)) {
           rState := sRCollect
+          printf("[MemorySim] All read requests issued, waiting for responses\n")
         }
       }
     }
@@ -224,10 +251,11 @@ class SimMemorySimExecutor(
         read_responses_received       := read_responses_received + 1.U
 
         printf(
-          "[MemorySim] Read response %d: data=%x addr=%x\n",
+          "[MemorySim] Read response %d: data=%x addr=%x (need %d total)\n",
           beat_index,
           memSys.io.out.bits.data,
-          memSys.io.out.bits.addr
+          memSys.io.out.bits.addr,
+          read_count
         )
       }
 
@@ -248,6 +276,11 @@ class SimMemorySimExecutor(
           printf("[MemorySim] Read burst complete id=%d\n", read_id)
         }
       }
+      
+      // Debug: Check if we're stuck waiting
+      when(read_responses_received >= read_count && read_beats_sent >= read_count) {
+        printf("[MemorySim] ERROR: Should have completed burst but still in sRCollect!\n")
+      }
     }
   }
 
@@ -262,8 +295,12 @@ class SimMemorySimExecutor(
   memSys.io.in.bits.wr_en := mem_req_is_write
   memSys.io.in.bits.rd_en := mem_req_is_read
 
-  // Address calculation
-  memSys.io.in.bits.addr := Mux(mem_req_is_write, store_addr, read_addr + (read_beats_issued << read_size))
+  // Address calculation - FIXED: Use current address being processed
+  memSys.io.in.bits.addr := Mux(
+    mem_req_is_write, 
+    store_addr,  // Current write address
+    read_addr    // Current read address
+  )
 
   // Write data (with strobe handling like original)
   val fullMask        = ((BigInt(1) << strbBits) - 1).U(strbBits.W)
@@ -313,7 +350,11 @@ class SimMemorySimExecutor(
   }
 
   printf(
-    "[MemorySim] Active ranks: %d, Req queue: %d, Resp queue: %d\n",
+    "[MemorySim] wState=%d rState=%d mem_req_wr=%d mem_req_rd=%d active_ranks=%d req_q=%d resp_q=%d\n",
+    wState.asUInt,
+    rState.asUInt,
+    mem_req_is_write.asUInt,
+    mem_req_is_read.asUInt,
     io.debug.activeRanks,
     io.debug.reqQueueCount,
     io.debug.respQueueCount
