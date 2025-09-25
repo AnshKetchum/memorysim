@@ -89,7 +89,7 @@ case class DRAMBankParameters(
   tRP:         Int = 14,
   tRAS:        Int = 34,
   tRFC:        Int = 3,
-  tREFI:       Int = 3900,
+  tREFI:       Int = 30,
   tREFIb:      Int = 128,
   tRPRE:       Int = 1,
   tWPRE:       Int = 1,
