@@ -63,24 +63,6 @@ class SimMemorySimExecutor(
     bankIndex = 0     // WARNING: Default to bank 0
   )
 
-  // Print compile-time parameters (these are known at elaboration)
-  // println(s"[MemorySim] COMPILE-TIME PARAMS:")
-  // println(s"  memSize=${memSize} lineSize=${lineSize} memBase=0x${memBase.toString(16)} chipId=${chipId}")
-  // println(s"  addrBits=${addrBits} dataBits=${dataBits} wordBytes=${wordBytes} strbBits=${strbBits}")
-  // println(s"  AXI params: idBits=${params.idBits}")
-  // println(
-  //   s"  Memory config: addressWidth=${memParams.memConfiguration.addressWidth} dataWidth=${memParams.memConfiguration.dataWidth}"
-  // )
-  // println(
-  //   s"  numberOfChannels=${memParams.memConfiguration.numberOfChannels} numberOfRanks=${memParams.memConfiguration.numberOfRanks} numberOfBanks=${memParams.memConfiguration.numberOfBanks}"
-  // )
-  // println(
-  //   s"  memoryQueueSize=${memParams.memConfiguration.memoryQueueSize} requestIDBits=${memParams.memConfiguration.requestIDBits}"
-  // )
-  // println(
-  //   s"  Local config: channelIndex=${localConfig.channelIndex} rankIndex=${localConfig.rankIndex} bankIndex=${localConfig.bankIndex}"
-  // )
-
   // Instantiate the MultiChannelSystem
   val memSys = Module(new MultiChannelSystem(memParams, localConfig))
 
@@ -118,13 +100,13 @@ class SimMemorySimExecutor(
         write_responses_pending := 0.U
         wState                  := sWCollect
 
-        // printf(
-        //   "[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n",
-        //   io.axi.aw.bits.id,
-        //   io.axi.aw.bits.addr,
-        //   io.axi.aw.bits.len,
-        //   io.axi.aw.bits.size
-        // )
+        printf(
+          "[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n",
+          io.axi.aw.bits.id,
+          io.axi.aw.bits.addr,
+          io.axi.aw.bits.len,
+          io.axi.aw.bits.size
+        )
       }
     }
     is(sWCollect) {
@@ -134,18 +116,8 @@ class SimMemorySimExecutor(
         store_addr              := store_addr + (1.U << store_size)
         store_count             := store_count - 1.U
 
-        // printf(
-        //   "[MemorySim] W.fire beat=%d addr=%x data=%x strb=%x last=%d\n",
-        //   write_beats_issued,
-        //   store_addr,
-        //   io.axi.w.bits.data,
-        //   io.axi.w.bits.strb,
-        //   io.axi.w.bits.last.asUInt
-        // )
-
         when(io.axi.w.bits.last || store_count === 1.U) {
           wState := sWWaitResp
-          // printf("[MemorySim] Write burst issued, waiting for %d responses\n", write_responses_pending)
         }
       }
     }
@@ -154,18 +126,14 @@ class SimMemorySimExecutor(
       when(memSys.io.out.fire && memSys.io.out.bits.wr_en) {
         write_responses_pending := write_responses_pending - 1.U
 
-        // printf("[MemorySim] Write response received, %d remaining\n", write_responses_pending - 1.U)
-
         when(write_responses_pending === 1.U) {
           wState := sWResp
-          // printf("[MemorySim] All write responses received, sending B response\n")
         }
       }
     }
     is(sWResp) {
       when(io.axi.b.fire) {
         wState := sWIdle
-        // printf("[MemorySim] B.fire id=%d\n", store_id)
       }
     }
   }
@@ -233,30 +201,23 @@ class SimMemorySimExecutor(
         }
 
         rState := sRIssue
-        // printf(
-        //   "[MemorySim] AR.fire id=%d addr=%x len=%d size=%d\n",
-        //   io.axi.ar.bits.id,
-        //   io.axi.ar.bits.addr,
-        //   io.axi.ar.bits.len,
-        //   io.axi.ar.bits.size
-        // )
+        printf(
+          "[MemorySim] AR.fire id=%d addr=%x len=%d size=%d\n",
+          io.axi.ar.bits.id,
+          io.axi.ar.bits.addr,
+          io.axi.ar.bits.len,
+          io.axi.ar.bits.size
+        )
       }
     }
     is(sRIssue) {
       // Issue memory read requests for the entire burst
       when(memSys.io.in.ready && (read_beats_issued < read_count)) {
-        // printf(
-        //   "[MemorySim] Issuing read request beat=%d addr=%x\n",
-        //   read_beats_issued,
-        //   read_addr
-        // )
-
         read_beats_issued := read_beats_issued + 1.U
         read_addr         := read_addr + (1.U << read_size)
 
         when(read_beats_issued === (read_count - 1.U)) {
           rState := sRCollect
-          // printf("[MemorySim] All read requests issued, waiting for responses\n")
         }
       }
     }
@@ -273,15 +234,6 @@ class SimMemorySimExecutor(
         read_buffer_valid(beat_index) := true.B
         read_responses_received       := read_responses_received + 1.U
         read_timeout_counter          := 0.U // Reset timeout on response
-
-        // printf(
-        //   "[MemorySim] Read response %d: data=%x addr=%x req_id=%d (need %d total)\n",
-        //   beat_index,
-        //   memSys.io.out.bits.data,
-        //   memSys.io.out.bits.addr,
-        //   memSys.io.out.bits.request_id,
-        //   read_count
-        // )
       }
 
       // Send buffered data to AXI R channel
@@ -289,29 +241,20 @@ class SimMemorySimExecutor(
         read_beats_sent := read_beats_sent + 1.U
 
         printf(
-          "[MemorySim] R.fire id=%d data=%x last=%d beats_sent=%d\n",
+          "[MemorySim] R.fire id=%d data=%x last=%d beats_left=%d\n",
           read_id,
           read_buffer(read_beats_sent),
           (read_beats_sent === (read_count - 1.U)).asUInt,
-          read_beats_sent + 1.U
+          read_count - read_beats_sent - 1.U
         )
 
         when(io.axi.r.bits.last) {
           rState := sRIdle
-          // printf("[MemorySim] Read burst complete id=%d\n", read_id)
         }
       }
 
       // Timeout detection - if we've been waiting too long, force completion
       when(read_timeout_counter > 10000.U) {
-        // printf("[MemorySim] TIMEOUT: Forcing read burst completion after waiting too long\n")
-        // printf(
-        //   "[MemorySim] Expected: %d responses, Got: %d responses, Sent: %d beats\n",
-        //   read_count,
-        //   read_responses_received,
-        //   read_beats_sent
-        // )
-
         // Fill remaining buffer entries with zeros to allow completion
         for (i <- 0 until max_burst_len) {
           when(i.U >= read_responses_received && i.U < read_count) {
@@ -320,16 +263,6 @@ class SimMemorySimExecutor(
           }
         }
         read_responses_received := read_count
-      }
-
-      // Debug: Check if we're stuck waiting and have capacity to receive more responses
-      when(read_responses_received < read_count && !memSys.io.out.valid) {
-        // printf(
-        //   "[MemorySim] DEBUG: Waiting for response %d/%d, memSys.out.valid=%d\n",
-        //   read_responses_received,
-        //   read_count,
-        //   memSys.io.out.valid.asUInt
-        // )
       }
     }
   }
@@ -376,53 +309,4 @@ class SimMemorySimExecutor(
   io.debug.reqQueueCount  := memSys.io.reqQueueCount
   io.debug.respQueueCount := memSys.io.respQueueCount
   io.debug.activeRanks    := memSys.io.activeRanks
-
-  // Debug prints
-  // when(memSys.io.in.valid && !memSys.io.in.ready) {
-  //   printf(
-  //     "[MemorySim] MemSys BACKPRESSURE: req not ready for addr=%x\n",
-  //     memSys.io.in.bits.addr
-  //   )
-  // }
-
-  // when(memSys.io.in.fire) {
-  //   printf(
-  //     "[MemorySim] MemSys req: wr=%d rd=%d addr=%x data=%x\n",
-  //     memSys.io.in.bits.wr_en,
-  //     memSys.io.in.bits.rd_en,
-  //     memSys.io.in.bits.addr,
-  //     memSys.io.in.bits.wdata
-  //   )
-  // }
-
-  // // Debug: Track which addresses we've requested vs received responses for
-  // when(mem_req_is_read && memSys.io.in.ready) {
-  //   printf("[MemorySim] READ REQ ACCEPTED: addr=%x beat=%d\n", memSys.io.in.bits.addr, read_beats_issued)
-  // }
-
-  // when(memSys.io.out.fire) {
-  //   printf(
-  //     "[MemorySim] MemSys resp: wr=%d rd=%d addr=%x data=%x id=%d\n",
-  //     memSys.io.out.bits.wr_en,
-  //     memSys.io.out.bits.rd_en,
-  //     memSys.io.out.bits.addr,
-  //     memSys.io.out.bits.data,
-  //     memSys.io.out.bits.request_id
-  //   )
-  // }
-
-  // printf(
-  //   "[MemorySim] wState=%d rState=%d mem_req_wr=%d mem_req_rd=%d active_ranks=%d req_q=%d resp_q=%d read_beats_iss=%d read_resp_rcv=%d read_beats_sent=%d read_count=%d\n",
-  //   wState.asUInt,
-  //   rState.asUInt,
-  //   mem_req_is_write.asUInt,
-  //   mem_req_is_read.asUInt,
-  //   io.debug.activeRanks,
-  //   io.debug.reqQueueCount,
-  //   io.debug.respQueueCount,
-  //   read_beats_issued,
-  //   read_responses_received,
-  //   read_beats_sent,
-  //   read_count
-  // )
 }
