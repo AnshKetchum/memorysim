@@ -27,7 +27,7 @@ class Rank(
   cmdDemux.io.enq <> io.memCmd
 
   when(io.memCmd.fire) {
-    if(localConfig.verbose) {
+    if (localConfig.verbose) {
       printf("Rank received request")
     }
   }
@@ -60,8 +60,13 @@ class Rank(
 
     // Debug print
     when(stamped.fire) {
-      if(localConfig.verbose) {
-        printf("[Rank] Request enqueued to bank %d with addr 0x%x at cycle %d\n", idx.U, stamped.bits.addr, clock.asUInt)
+      if (localConfig.verbose) {
+        printf(
+          "[Rank] Request enqueued to bank %d with addr 0x%x at cycle %d\n",
+          idx.U,
+          stamped.bits.addr,
+          clock.asUInt
+        )
       }
     }
 
@@ -98,7 +103,7 @@ class Rank(
       lastColBank  := idx.U
       lastColCycle := clock.asUInt
 
-      if(localConfig.verbose) {
+      if (localConfig.verbose) {
         printf("[Rank] Response enqueued from bank %d at cycle %d\n", idx.U, lastColCycle)
       }
     }

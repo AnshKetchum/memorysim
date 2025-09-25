@@ -88,7 +88,7 @@ class MultiRankMemoryController(
     fsmVec(i).phyResp.bits  := io.phyResp.bits
 
     when(doFire) {
-      if(localConfig.verbose) {
+      if (localConfig.verbose) {
         printf(
           "[Controller] Response routed to FSM %d (rank %d, bank %d) at cycle\n",
           i.U,

@@ -127,9 +127,8 @@ case class MemoryConfigurationParameters(
 case class LocalConfigurationParameters(
   channelIndex: Int = 0,
   rankIndex:    Int = 0,
-  bankIndex:    Int = 0, 
-  verbose: Boolean = false
-  )
+  bankIndex:    Int = 0,
+  verbose:      Boolean = false)
 
 /** Base class for any non-bank module exposing a PhysicalMemoryIO interface
   */

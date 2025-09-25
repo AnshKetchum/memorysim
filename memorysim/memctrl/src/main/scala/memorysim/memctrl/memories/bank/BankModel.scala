@@ -72,7 +72,7 @@ class DRAMBankWithWait(
   switch(state) {
     is(sIdle) {
       when(cmd.fire) {
-        if(localConfig.verbose) {
+        if (localConfig.verbose) {
           printf("[Bank Model] Received command. time = %d \n", waitCycles)
         }
         pending := cmd.bits
@@ -84,7 +84,7 @@ class DRAMBankWithWait(
     is(sWait) {
       // count down external wait
       when(timer === 0.U) {
-        if(localConfig.verbose) {
+        if (localConfig.verbose) {
           printf("[Bank Model] Timer hit zero.\n")
         }
         state := sExec

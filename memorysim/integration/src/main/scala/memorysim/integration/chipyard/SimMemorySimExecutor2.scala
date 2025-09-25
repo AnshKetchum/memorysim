@@ -14,7 +14,12 @@ import freechips.rocketchip.amba.axi4.{AXI4Bundle, AXI4BundleParameters}
   *
   * This file uses plain printf(...) format strings (no p interpolator).
   */
-class SimMemorySimExecutorDefault(memSize: BigInt, lineSize: Int, memBase: BigInt, params: AXI4BundleParameters, chipId: Int)
+class SimMemorySimExecutorDefault(
+  memSize:  BigInt,
+  lineSize: Int,
+  memBase:  BigInt,
+  params:   AXI4BundleParameters,
+  chipId:   Int)
     extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4Bundle(params))

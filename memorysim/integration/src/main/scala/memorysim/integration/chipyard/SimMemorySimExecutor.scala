@@ -53,7 +53,7 @@ class SimMemorySimExecutor(
     ),
     bankConfiguration = DRAMBankParameters(),               // WARNING: Using default HBM2 timing
     controllerConfiguration = MemoryControllerParameters(), // WARNING: Default controller params
-    trackPerformance = true                               // WARNING: Performance tracking disabled by default
+    trackPerformance = true                                 // WARNING: Performance tracking disabled by default
   )
 
   // WARNING: Using default local configuration - adjust channel/rank/bank indices as needed

@@ -24,7 +24,11 @@ object DRAMOp {
   val SREF_INT        = 7
 }
 
-class TimingEngine(params: DRAMBankParameters, memConfig: MemoryConfigurationParameters, localConfig: LocalConfigurationParameters) extends Module {
+class TimingEngine(
+  params:      DRAMBankParameters,
+  memConfig:   MemoryConfigurationParameters,
+  localConfig: LocalConfigurationParameters)
+    extends Module {
   val io = IO(new Bundle {
     val cmd        = Flipped(Decoupled(new BankMemoryCommand(memConfig)))
     val waitCycles = Output(UInt(32.W))
@@ -52,7 +56,7 @@ class TimingEngine(params: DRAMBankParameters, memConfig: MemoryConfigurationPar
 
   // When a new command fires, shift curr->prev and decode new opcode
   when(io.cmd.fire) {
-    if(localConfig.verbose) {
+    if (localConfig.verbose) {
       printf(
         "Received command - cs = %d ras = %d cas = %d we = %d\n",
         io.cmd.bits.cs,
