@@ -148,9 +148,12 @@ class ClosedPageBankScheduler(
       when(sentCmd && io.phyResp.fire) {
         state   := sSref
         sentCmd := false.B
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: SREF_ENTER -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: SREF_ENTER -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
       }
     }
 
@@ -170,9 +173,12 @@ class ClosedPageBankScheduler(
       when(sentCmd && io.phyResp.fire) {
         state   := sIdle
         sentCmd := false.B
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: SREF_EXIT -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: SREF_EXIT -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
       }
     }
 
@@ -182,27 +188,33 @@ class ClosedPageBankScheduler(
       }
       when(io.cmdOut.fire) {
         sentCmd := true.B
-        printf("Issued activate.\n")
+
+        if(localConfiguration.verbose) {
+          printf("Issued activate.\n")
+        }
       }
       when(sentCmd && !io.phyResp.fire) {
-        printf(
-          "[Cycle %d]; rdy=%d valid=%d  waiting for ACTIVATE response; addr=%d reqId=%d \n",
-          cycleCounter,
-          io.phyResp.ready,
-          io.phyResp.valid,
-          reqAddrReg,
-          reqIDReg
-        )
-        printf(
-          "[Cycle %d]; rankIdx=%d bankIdx=%d respIdx=%d respBI=%d addr=%d reqId=%d \n",
-          cycleCounter,
-          localConfiguration.rankIndex.U,
-          localConfiguration.bankIndex.U,
-          respDec.io.rankIndex,
-          respDec.io.bankIndex,
-          io.phyResp.bits.addr,
-          io.phyResp.bits.request_id
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            "[Cycle %d]; rdy=%d valid=%d  waiting for ACTIVATE response; addr=%d reqId=%d \n",
+            cycleCounter,
+            io.phyResp.ready,
+            io.phyResp.valid,
+            reqAddrReg,
+            reqIDReg
+          )
+          printf(
+            "[Cycle %d]; rankIdx=%d bankIdx=%d respIdx=%d respBI=%d addr=%d reqId=%d \n",
+            cycleCounter,
+            localConfiguration.rankIndex.U,
+            localConfiguration.bankIndex.U,
+            respDec.io.rankIndex,
+            respDec.io.bankIndex,
+            io.phyResp.bits.addr,
+            io.phyResp.bits.request_id
+          )
+        }
       }
       when(sentCmd && io.phyResp.fire) {
         lastActivate          := cycleCounter
@@ -210,9 +222,12 @@ class ClosedPageBankScheduler(
         actPtr                := actPtr + 1.U
         sentCmd               := false.B
         state                 := Mux(reqIsRead, sRead, sWrite)
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: ACTIVATE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: ACTIVATE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
       }
     }
 
@@ -230,9 +245,12 @@ class ClosedPageBankScheduler(
         lastReadEnd     := cycleCounter
         sentCmd         := false.B
         state           := sPrecharge
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: READ -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: READ -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
 
       }
     }
@@ -249,9 +267,12 @@ class ClosedPageBankScheduler(
         sentCmd         := false.B
         state           := sPrecharge
         responseDataReg := io.phyResp.bits.data
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: WRITE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: WRITE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
 
       }
     }
@@ -267,9 +288,12 @@ class ClosedPageBankScheduler(
         lastPrecharge := cycleCounter
         sentCmd       := false.B
         state         := sDone
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: PRECHARGE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: PRECHARGE -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
       }
     }
 
@@ -289,9 +313,12 @@ class ClosedPageBankScheduler(
         lastRefresh := cycleCounter
         sentCmd     := false.B
         state       := sIdle
-        printf(
-          p"[Cycle $cycleCounter] CMD FIRE: REFRESH -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
-        )
+
+        if(localConfiguration.verbose) {
+          printf(
+            p"[Cycle $cycleCounter] CMD FIRE: REFRESH -> Rank ${localConfiguration.rankIndex}, Bank ${localConfiguration.bankIndex}\n"
+          )
+        }
 
       }
     }

@@ -88,18 +88,20 @@ class MultiRankMemoryController(
     fsmVec(i).phyResp.bits  := io.phyResp.bits
 
     when(doFire) {
-      printf(
-        "[Controller] Response routed to FSM %d (rank %d, bank %d) at cycle\n",
-        i.U,
-        (i / banksPerRank).U,
-        (i % banksPerRank).U
-      )
-      printf(
-        "  -> request_id = %d, data = 0x%x, addr = 0x%x\n",
-        io.phyResp.bits.request_id,
-        io.phyResp.bits.data,
-        io.phyResp.bits.addr
-      )
+      if(localConfig.verbose) {
+        printf(
+          "[Controller] Response routed to FSM %d (rank %d, bank %d) at cycle\n",
+          i.U,
+          (i / banksPerRank).U,
+          (i % banksPerRank).U
+        )
+        printf(
+          "  -> request_id = %d, data = 0x%x, addr = 0x%x\n",
+          io.phyResp.bits.request_id,
+          io.phyResp.bits.data,
+          io.phyResp.bits.addr
+        )
+      }
     }
   }
 

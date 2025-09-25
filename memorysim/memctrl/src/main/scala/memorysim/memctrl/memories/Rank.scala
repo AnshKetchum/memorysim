@@ -27,13 +27,15 @@ class Rank(
   cmdDemux.io.enq <> io.memCmd
 
   when(io.memCmd.fire) {
-    printf("Rank received request")
+    if(localConfig.verbose) {
+      printf("Rank received request")
+    }
   }
 
   val banksWithTiming = Seq.tabulate(params.numberOfBanks) { idx =>
     val cfg     = localConfig.copy(bankIndex = idx)
     val bank    = Module(new DRAMBankWithWait(bankParams, params, cfg, trackPerformance))
-    val timer   = Module(new TimingEngine(bankParams, params))
+    val timer   = Module(new TimingEngine(bankParams, params, cfg))
     val deqPort = cmdDemux.io.deq(idx)
 
     // Create BankMemoryCommand with metadata
@@ -58,7 +60,9 @@ class Rank(
 
     // Debug print
     when(stamped.fire) {
-      printf("[Rank] Request enqueued to bank %d with addr 0x%x at cycle %d\n", idx.U, stamped.bits.addr, clock.asUInt)
+      if(localConfig.verbose) {
+        printf("[Rank] Request enqueued to bank %d with addr 0x%x at cycle %d\n", idx.U, stamped.bits.addr, clock.asUInt)
+      }
     }
 
     // Split the command manually
@@ -93,7 +97,10 @@ class Rank(
     when(respQ.io.enq.fire) {
       lastColBank  := idx.U
       lastColCycle := clock.asUInt
-      printf("[Rank] Response enqueued from bank %d at cycle %d\n", idx.U, lastColCycle)
+
+      if(localConfig.verbose) {
+        printf("[Rank] Response enqueued from bank %d at cycle %d\n", idx.U, lastColCycle)
+      }
     }
 
     (bank, respQ)

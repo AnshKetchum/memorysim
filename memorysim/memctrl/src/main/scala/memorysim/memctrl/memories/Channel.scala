@@ -40,12 +40,14 @@ class Channel(
     rankM.io.phyResp.ready     := respQueues(i).io.enq.ready
 
     when(respQueues(i).io.enq.fire) {
-      printf("[Channel] Response enqueued from Rank %d\n", i.U)
-      printf(
-        " [Channel]  -> request_id = %d, data = 0x%x\n",
-        rankM.io.phyResp.bits.request_id,
-        rankM.io.phyResp.bits.data
-      )
+      if (localConfig.verbose) { // Scala boolean check at elaboration time
+        printf("[Channel] Response enqueued from Rank %d\n", i.U)
+        printf(
+          " [Channel]  -> request_id = %d, data = 0x%x\n",
+          rankM.io.phyResp.bits.request_id,
+          rankM.io.phyResp.bits.data
+        )
+      }
     }
   }
 

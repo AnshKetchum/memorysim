@@ -156,7 +156,10 @@ class OpenPageBankScheduler(
       }
       when(io.cmdOut.fire) {
         sentCmd := true.B
-        printf("Issued activate.\n")
+
+        if(localConfiguration.verbose) {
+          printf("Issued activate.\n")
+        }
       }
       when(sentCmd && io.phyResp.fire) {
         openRow      := reqRow
@@ -164,7 +167,10 @@ class OpenPageBankScheduler(
         lastActivate := cycleCounter
         sentCmd      := false.B
         state        := Mux(reqIsRead, sRead, sWrite)
-        printf(p"[Cycle $cycleCounter] CMD FIRE: ACTIVATE\n")
+
+        if(localConfiguration.verbose) {
+          printf(p"[Cycle $cycleCounter] CMD FIRE: ACTIVATE\n")
+        }
       }
     }
 
@@ -181,7 +187,10 @@ class OpenPageBankScheduler(
         lastReadEnd     := cycleCounter
         sentCmd         := false.B
         state           := sDone // skip precharge for open-page
-        printf(p"[Cycle $cycleCounter] CMD FIRE: READ\n")
+
+        if(localConfiguration.verbose) {
+          printf(p"[Cycle $cycleCounter] CMD FIRE: READ\n")
+        }
       }
     }
 
@@ -197,7 +206,9 @@ class OpenPageBankScheduler(
         sentCmd         := false.B
         responseDataReg := io.phyResp.bits.data
         state           := sDone // skip precharge for open-page
-        printf(p"[Cycle $cycleCounter] CMD FIRE: WRITE\n")
+        if(localConfiguration.verbose) {
+          printf(p"[Cycle $cycleCounter] CMD FIRE: WRITE\n")
+        }
       }
     }
 
@@ -213,7 +224,10 @@ class OpenPageBankScheduler(
         lastPrecharge := cycleCounter
         sentCmd       := false.B
         state         := sDone
-        printf(p"[Cycle $cycleCounter] CMD FIRE: PRECHARGE\n")
+
+        if(localConfiguration.verbose) {
+          printf(p"[Cycle $cycleCounter] CMD FIRE: PRECHARGE\n")
+        }
       }
     }
 
