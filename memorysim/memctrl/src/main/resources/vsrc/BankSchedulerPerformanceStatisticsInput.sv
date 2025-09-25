@@ -28,6 +28,7 @@ module BankSchedulerPerformanceStatisticsInput #(
     always @(posedge clk) begin
         if (reset) begin
         end else if (req_fire) begin
+            $display("REQUEST FIRE");
             $fwrite(file, "%d,%d,%d,%d,%d\n", request_id, addr, rd_en, wr_en, globalCycle);
         end
     end
