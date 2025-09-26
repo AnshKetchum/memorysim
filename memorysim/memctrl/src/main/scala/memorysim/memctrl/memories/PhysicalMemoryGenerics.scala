@@ -72,7 +72,7 @@ class PhysicalBankIO(params: MemoryConfigurationParameters) extends Bundle {
 
 /** HBM2 timing parameters + ACK constant * */
 case class DRAMBankParameters(
-  numRows:     Int = 32768,
+  numRows:     Int = 32767,
   numCols:     Int = 2048,
   deviceWidth: Int = 128,
   tCK:         Int = 1,

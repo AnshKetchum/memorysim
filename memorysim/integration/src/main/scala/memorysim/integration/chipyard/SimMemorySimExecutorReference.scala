@@ -38,6 +38,16 @@ class SimMemorySimExecutorDefault(
 
   val mem = SyncReadMem(depth, UInt(dataBits.W))
 
+  // printf("[SimMemorySimExecutorDefault] Creating memory executor:\n")
+  // printf("  memSize  = %d bytes\n", memSize.U)
+  // printf("  lineSize = %d\n", lineSize.U)
+  // printf("  chipId   = %d\n", chipId.U)
+  // printf("  addrBits = %d\n", params.addrBits.U)
+  // printf("  dataBits = %d\n", params.dataBits.U)
+  // printf("  idBits   = %d\n", params.idBits.U)
+  // printf("  wordBytes = %d\n", wordBytes.U)
+  // printf("  depth    = %d\n", depth.U)
+
   def addrToIndex(addr: UInt): UInt = addr >> log2Ceil(wordBytes) // beat index (word address)
 
   // ---- write side state (AW + W -> B) ----
