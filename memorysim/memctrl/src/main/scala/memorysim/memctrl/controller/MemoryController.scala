@@ -76,12 +76,19 @@ class MultiRankMemoryController(
   cmdQueue.io.enq <> cmdArb.io.out
 
   // ------ Response routing back to FSMs ------
-  val respDecoder = Module(new AddressDecoder(params, bankParams))
-  respDecoder.io.addr := io.phyResp.bits.addr
-  val respFlat = respDecoder.io.rankIndex * banksPerRank.U + respDecoder.io.bankIndex
+  // Extract routing information from RequestPacket - this is the authoritative source
+  val phyRespRankId = io.phyResp.bits.request_id.rank_id
+  val phyRespBankId = io.phyResp.bits.request_id.bank_id
+  val phyRespChannelId = io.phyResp.bits.request_id.channel_id
+  
+  // Calculate target FSM index from RequestPacket info
+  val targetFsm = phyRespRankId * banksPerRank.U + phyRespBankId
+  
+  // Validate that this response belongs to our channel
+  val isOurChannel = (phyRespChannelId === localConfig.channelIndex.U)
 
   for (i <- 0 until totalBankFSMs) {
-    val isTgt  = respFlat === i.U
+    val isTgt  = targetFsm === i.U && isOurChannel
     val doFire = io.phyResp.valid && fsmVec(i).phyResp.ready && isTgt
 
     fsmVec(i).phyResp.valid := io.phyResp.valid && isTgt
@@ -96,16 +103,24 @@ class MultiRankMemoryController(
           (i % banksPerRank).U
         )
         printf(
-          "  -> request_id = %d, data = 0x%x, addr = 0x%x\n",
-          io.phyResp.bits.request_id,
+          "  -> ext_req_id = %d, int_req_id = %d, data = 0x%x, addr = 0x%x\n",
+          io.phyResp.bits.request_id.request_id,
+          io.phyResp.bits.request_id.internal_req_id,
           io.phyResp.bits.data,
           io.phyResp.bits.addr
+        )
+        printf(
+          "  -> channel_id = %d, rank_id = %d, bank_id = %d\n",
+          io.phyResp.bits.request_id.channel_id,
+          io.phyResp.bits.request_id.rank_id,
+          io.phyResp.bits.request_id.bank_id
         )
       }
     }
   }
 
-  io.phyResp.ready := fsmVec(respFlat).phyResp.ready
+  // Only accept responses that belong to our channel
+  io.phyResp.ready := isOurChannel && fsmVec(targetFsm).phyResp.ready
 
   // ------ Collect responses from FSMs ------
   val respArb = Module(new RRArbiter(new ControllerResponse(params), totalBankFSMs))

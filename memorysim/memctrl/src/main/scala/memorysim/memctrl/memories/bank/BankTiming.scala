@@ -89,27 +89,27 @@ class TimingEngine(
   val tRCDWR = params.tRCDWR.U(32.W)
   val CWL    = params.CWL.U(32.W)
   val tRTP_S = params.tRTP_S.U(32.W)
-  val tXS    = params.tXS.U(32.W)
+  val tXS    = 1.U(32.W) // params.tXS.U(32.W)
 
   // Derived delays:
-  val read_to_read_l    = Mux(burst > tCCD_L, burst, tCCD_L)
-  val read_to_write     = RL + burst - WL + tRTRS
-  val read_to_precharge = AL + tRTP
-  val readp_to_activate = AL + burst + tRTP + tRP
+  val read_to_read_l    = 1.U(32.W) //Mux(burst > tCCD_L, burst, tCCD_L)
+  val read_to_write     = 1.U(32.W) // RL + burst - WL + tRTRS
+  val read_to_precharge = 1.U(32.W) // AL + tRTP
+  val readp_to_activate = 1.U(32.W) // AL + burst + tRTP + tRP
 
-  val write_to_read_l    = WL + burst + tRTRS - RL
-  val write_to_write_l   = Mux(burst > tCCD_L, burst, tCCD_L)
-  val write_to_precharge = WL + burst + tWR
-  val writep_to_activate = write_to_precharge + tRP
+  val write_to_read_l    = 1.U(32.W) // WL + burst + tRTRS - RL
+  val write_to_write_l   = 1.U(32.W) // Mux(burst > tCCD_L, burst, tCCD_L)
+  val write_to_precharge = 1.U(32.W) // WL + burst + tWR
+  val writep_to_activate = 1.U(32.W) // write_to_precharge + tRP
 
-  val precharge_to_activate = tRP
+  val precharge_to_activate = 1.U(32.W) // tRP
 
-  val activate_to_act_l     = tRRD_L
-  val activate_to_read      = tRCDRD
-  val activate_to_write     = tRCDWR
-  val activate_to_precharge = tRAS
+  val activate_to_act_l     = 1.U(32.W) // tRRD_L
+  val activate_to_read      = 1.U(32.W) // tRCDRD
+  val activate_to_write     = 1.U(32.W) // tRCDWR
+  val activate_to_precharge = 1.U(32.W) // tRAS
 
-  val refresh_to_activate = tRFC
+  val refresh_to_activate = 1.U(32.W) // tRFC
 
   // ----------------------------------------------------------------
   // 2) same‑bank timing matrix
