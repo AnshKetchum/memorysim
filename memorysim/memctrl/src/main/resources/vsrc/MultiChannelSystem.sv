@@ -1163,24 +1163,24 @@ module DRAMBankWithWait(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl
     pending_request_id_scheduler_identifier;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankModel.scala:10:7, :31:20]
 endmodule
 
-module TimingEngine(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-  input         clock,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-                reset,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-                io_cmd_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
-                io_cmd_bits_cs,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
-                io_cmd_bits_ras,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
-                io_cmd_bits_cas,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
-                io_cmd_bits_we,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
-  output [31:0] io_waitCycles	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
+module SingleCycleTimingEngine(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+  input         clock,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+                reset,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+                io_cmd_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
+                io_cmd_bits_cs,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
+                io_cmd_bits_ras,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
+                io_cmd_bits_cas,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
+                io_cmd_bits_we,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
+  output [31:0] io_waitCycles	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
 );
 
-  reg  [3:0] prevOp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:38:23]
+  reg  [3:0] prevOp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:17:23]
   wire [3:0] _GEN =
-    {~io_cmd_bits_cs, ~io_cmd_bits_ras, ~io_cmd_bits_cas, ~io_cmd_bits_we};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:40:39, :41:39, :42:39, :43:39, :48:13]
-  always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-    if (reset)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-      prevOp <= 4'h8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:38:23]
-    else if (io_cmd_valid)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:32:14]
+    {~io_cmd_bits_cs, ~io_cmd_bits_ras, ~io_cmd_bits_cas, ~io_cmd_bits_we};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:19:39, :20:39, :21:39, :22:39, :27:13]
+  always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+    if (reset)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+      prevOp <= 4'h8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:17:23]
+    else if (io_cmd_valid)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:11:14]
       prevOp <=
         {1'h0,
          _GEN == 4'hC
@@ -1189,27 +1189,27 @@ module TimingEngine(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/mem
                ? 3'h1
                : _GEN == 4'hB
                    ? 3'h2
-                   : _GEN == 4'hD ? 3'h5 : _GEN == 4'hE ? 3'h6 : {3{&_GEN}}};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7, :38:23, :46:10, :48:{13,41}, :49:28, :50:28, :51:28, :52:28, :53:28, :54:28, :58:21, :69:12]
+                   : _GEN == 4'hD ? 3'h5 : _GEN == 4'hE ? 3'h6 : {3{&_GEN}}};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7, :17:23, :25:10, :27:{13,41}, :28:28, :29:28, :30:28, :31:28, :32:28, :33:28, :37:21, :48:12]
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-    `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-      `FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
+  `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+    `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+      `FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
     `endif // FIRRTL_BEFORE_INITIAL
-    logic [31:0] _RANDOM[0:0];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-    initial begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-      `ifdef INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-        `INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
+    logic [31:0] _RANDOM[0:0];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+    initial begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+      `ifdef INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+        `INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-        prevOp = _RANDOM[/*Zero width*/ 1'b0][3:0];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7, :38:23]
+      `ifdef RANDOMIZE_REG_INIT	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+        prevOp = _RANDOM[/*Zero width*/ 1'b0][3:0];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7, :17:23]
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
-      `FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7]
+    `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
+      `FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  assign io_waitCycles = {31'h0, prevOp != 4'h8};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/BankTiming.scala:27:7, :38:23, :162:{15,64}, :163:19, :165:19]
+  assign io_waitCycles = {31'h0, prevOp != 4'h8};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/bank/timing/SingleCycleBankTiming.scala:6:7, :17:23, :121:{15,64}, :122:19, :124:19]
 endmodule
 
 // VCS coverage exclude_file
@@ -4642,7 +4642,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_0_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_0_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -4735,7 +4735,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_1_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_1_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_1_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -4828,7 +4828,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_2_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_2_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_2_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -4921,7 +4921,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_3_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_3_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_3_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -5014,7 +5014,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_4_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_4_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_4_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -5107,7 +5107,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_5_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_5_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_5_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -5200,7 +5200,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_6_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_6_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_6_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -5293,7 +5293,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
       (_banksWithTiming_7_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_7_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_7_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -8724,7 +8724,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_0_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_0_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -8817,7 +8817,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_1_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_1_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_1_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -8910,7 +8910,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_2_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_2_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_2_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -9003,7 +9003,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_3_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_3_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_3_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -9096,7 +9096,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_4_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_4_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_4_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -9189,7 +9189,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_5_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_5_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_5_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -9282,7 +9282,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_6_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_6_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_6_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
@@ -9375,7 +9375,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
       (_banksWithTiming_7_1_io_phyResp_bits_request_id_scheduler_identifier),
     .io_waitCycles                                   (_timer_7_io_waitCycles)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
   );
-  TimingEngine timer_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
+  SingleCycleTimingEngine timer_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:38:25]
     .clock           (clock),
     .reset           (reset),
     .io_cmd_valid    (_cmdDemux_io_deq_7_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]

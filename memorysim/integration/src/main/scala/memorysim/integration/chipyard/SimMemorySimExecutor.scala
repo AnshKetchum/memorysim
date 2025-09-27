@@ -54,7 +54,7 @@ class SimMemorySimExecutor(
     bankConfiguration = DRAMBankParameters(), // WARNING: Using default HBM2 timing
     controllerConfiguration = MemoryControllerParameters(
       queueSize = 1,
-      openPagePolicy = false
+      openPagePolicy = true
     ),                                        // WARNING: Default controller params
     trackPerformance = true                   // WARNING: Performance tracking disabled by default
   )
