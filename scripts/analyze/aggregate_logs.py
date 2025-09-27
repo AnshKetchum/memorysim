@@ -12,6 +12,7 @@ import csv
 import json
 import os
 import glob
+import traceback
 from collections import defaultdict
 from typing import Dict, List, Any, Optional
 
@@ -234,7 +235,7 @@ class MemorySystemAggregator:
                     request_id = self.safe_int(row.get('RequestID'))
                     internal_request_id = self.safe_int(row.get('InternalReqID'))
                     cycle = self.safe_int(row.get('Cycle'))
-                    command_type = row.get('Type', '').strip()
+                    command_type = (row.get('Type', '') or " ").strip()
                     
                     if None in [request_id, internal_request_id, cycle] or not command_type:
                         continue
@@ -486,6 +487,7 @@ def main():
         
     except Exception as e:
         print(f"Error processing files: {e}")
+        traceback.print_exc()
         return 1
     
     return 0

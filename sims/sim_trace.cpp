@@ -83,17 +83,80 @@ vector<TraceEntry> load_trace(const string &filename) {
         exit(1);
     }
     string line;
+
+    auto strip = [](string s) -> string {
+        // trim leading/trailing whitespace
+        size_t a = s.find_first_not_of(" \t\r\n");
+        size_t b = s.find_last_not_of(" \t\r\n");
+        if (a == string::npos) return "";
+        s = s.substr(a, b - a + 1);
+        // remove trailing commas
+        while (!s.empty() && (s.back() == ',' || s.back() == ';')) s.pop_back();
+        return s;
+    };
+
     while (getline(infile, line)) {
         if (line.empty()) continue;
+
         istringstream iss(line);
         string addr_str, op;
-        unsigned long long cycle;
-        iss >> addr_str >> op >> cycle;
+        if (!(iss >> addr_str >> op)) continue;
+
+        // collect remaining tokens (could be either: [cycle]  OR  [data cycle])
+        vector<string> rest;
+        string tok;
+        while (iss >> tok) rest.push_back(tok);
+
+        if (rest.empty()) {
+            cerr << "WARNING: Malformed trace line (no cycle): " << line << endl;
+            continue;
+        }
+
+        // last token is always cycle (per your formats)
+        string cycle_str = strip(rest.back());
+        unsigned long long cycle = 0;
+        try {
+            cycle = stoull(cycle_str, nullptr, 0); // base 0 handles 0x...
+        } catch (...) {
+            cerr << "WARNING: Couldn't parse cycle '" << cycle_str << "' in line: " << line << endl;
+            continue;
+        }
+
         TraceEntry e;
-        e.addr = stoul(addr_str, nullptr, 16);
+        // parse address (support 0x or decimal)
+        string a = strip(addr_str);
+        try {
+            e.addr = static_cast<unsigned int>(stoul(a, nullptr, 0));
+        } catch (...) {
+            cerr << "WARNING: Couldn't parse address '" << a << "' in line: " << line << endl;
+            continue;
+        }
+
         e.is_write = (op == "WRITE");
         e.cycle = cycle;
-        e.wdata = e.is_write ? rand() : 0;
+        e.wdata = 0;
+
+        if (e.is_write) {
+            // if there's at least two tokens in rest, second-to-last is the data
+            if (rest.size() >= 2) {
+                string data_str = strip(rest[rest.size() - 2]);
+                try {
+                    e.wdata = static_cast<unsigned int>(stoul(data_str, nullptr, 0));
+                } catch (...) {
+                    // fallback to rand() if data can't be parsed
+                    e.wdata = static_cast<unsigned int>(rand());
+                    cerr << "WARNING: Couldn't parse write-data '" << data_str
+                         << "'; using random data 0x" << hex << e.wdata << dec
+                         << " for addr 0x" << hex << e.addr << dec << endl;
+                }
+            } else {
+                // no explicit data token — preserve old behavior: use rand()
+                e.wdata = static_cast<unsigned int>(rand());
+            }
+        } else {
+            e.wdata = 0;
+        }
+
         trace.push_back(e);
     }
     return trace;

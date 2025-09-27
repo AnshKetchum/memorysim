@@ -35,7 +35,7 @@ class SingleChannelSystem(
   memory_controller.io.phyResp <> channel.io.phyResp
 
   // Internal request ID register
-  val requestId = RegInit(0.U(params.memConfiguration.requestIDBits.W))
+  val requestId = RegInit(1.U(params.memConfiguration.requestIDBits.W))
 
   // Assume io.in and io.out are Decoupled interfaces.
   val inputFire  = io.in.valid && io.in.ready
