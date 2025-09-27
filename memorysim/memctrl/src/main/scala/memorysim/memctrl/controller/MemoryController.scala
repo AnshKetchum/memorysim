@@ -77,13 +77,13 @@ class MultiRankMemoryController(
 
   // ------ Response routing back to FSMs ------
   // Extract routing information from RequestPacket - this is the authoritative source
-  val phyRespRankId = io.phyResp.bits.request_id.rank_id
-  val phyRespBankId = io.phyResp.bits.request_id.bank_id
+  val phyRespRankId    = io.phyResp.bits.request_id.rank_id
+  val phyRespBankId    = io.phyResp.bits.request_id.bank_id
   val phyRespChannelId = io.phyResp.bits.request_id.channel_id
-  
+
   // Calculate target FSM index from RequestPacket info
   val targetFsm = phyRespRankId * banksPerRank.U + phyRespBankId
-  
+
   // Validate that this response belongs to our channel
   val isOurChannel = (phyRespChannelId === localConfig.channelIndex.U)
 

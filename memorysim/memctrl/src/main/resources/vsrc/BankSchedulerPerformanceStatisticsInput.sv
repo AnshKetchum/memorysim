@@ -21,14 +21,13 @@ module BankSchedulerPerformanceStatisticsInput #(
     initial begin
         $sformat(filename, "input_request_stats_scheduler_rank%0d_bank%0d.csv", RANK, BANK);
         file = $fopen(filename, "w");
-        $fwrite(file, "RequestID,Address,Type,Cycle\n");
+        $fwrite(file, "RequestID,Address,TypeRd,TypeWr,Cycle\n");
     end
 
-
     always @(posedge clk) begin
-        if (reset) begin
-        end else if (req_fire) begin
-            $fwrite(file, "%d,%d,%d,%d,%d\n", request_id, addr, rd_en, wr_en, globalCycle);
+        if (!reset && req_fire) begin
+            $fwrite(file, "%d,%d,%d,%d,%d\n",
+                request_id, addr, rd_en, wr_en, globalCycle);
         end
     end
 endmodule

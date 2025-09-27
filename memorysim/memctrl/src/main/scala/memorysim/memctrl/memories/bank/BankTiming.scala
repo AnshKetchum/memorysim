@@ -92,7 +92,7 @@ class TimingEngine(
   val tXS    = 1.U(32.W) // params.tXS.U(32.W)
 
   // Derived delays:
-  val read_to_read_l    = 1.U(32.W) //Mux(burst > tCCD_L, burst, tCCD_L)
+  val read_to_read_l    = 1.U(32.W) // Mux(burst > tCCD_L, burst, tCCD_L)
   val read_to_write     = 1.U(32.W) // RL + burst - WL + tRTRS
   val read_to_precharge = 1.U(32.W) // AL + tRTP
   val readp_to_activate = 1.U(32.W) // AL + burst + tRTP + tRP

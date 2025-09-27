@@ -23,22 +23,22 @@ class CommandQueuePerformanceStatisticsInput(val memParams: MemoryConfigurationP
     with HasBlackBoxResource {
 
   val io = IO(new Bundle {
-    val clk              = Input(Clock())
-    val reset            = Input(Bool())
-    val req_fire         = Input(Bool())
-    val addr             = Input(UInt(memParams.addressWidth.W))
-    val data             = Input(UInt(memParams.dataWidth.W))
-    val cs               = Input(Bool())
-    val ras              = Input(Bool())
-    val cas              = Input(Bool())
-    val we               = Input(Bool())
-    val globalCycle      = Input(UInt(memParams.globalCycleCountBits.W))
-    val request_id       = Input(UInt(memParams.requestIDBits.W))
-    val internal_req_id  = Input(UInt(memParams.requestIDBits.W))
-    val channel_id       = Input(UInt(log2Ceil(memParams.numberOfChannels).W))
-    val rank_id          = Input(UInt(log2Ceil(memParams.numberOfRanks).W))
-    val bank_id          = Input(UInt(log2Ceil(memParams.numberOfBanks).W))
-    val scheduler_id     = Input(UInt(memParams.requestIDBits.W))
+    val clk             = Input(Clock())
+    val reset           = Input(Bool())
+    val req_fire        = Input(Bool())
+    val addr            = Input(UInt(memParams.addressWidth.W))
+    val data            = Input(UInt(memParams.dataWidth.W))
+    val cs              = Input(Bool())
+    val ras             = Input(Bool())
+    val cas             = Input(Bool())
+    val we              = Input(Bool())
+    val globalCycle     = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id      = Input(UInt(memParams.requestIDBits.W))
+    val internal_req_id = Input(UInt(memParams.requestIDBits.W))
+    val channel_id      = Input(UInt(memParams.requestIDBits.W))
+    val rank_id         = Input(UInt(memParams.requestIDBits.W))
+    val bank_id         = Input(UInt(memParams.requestIDBits.W))
+    val scheduler_id    = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsInput.sv")
@@ -63,18 +63,18 @@ class CommandQueuePerformanceStatisticsOutput(val memParams: MemoryConfiguration
     with HasBlackBoxResource {
 
   val io = IO(new Bundle {
-    val clk              = Input(Clock())
-    val reset            = Input(Bool())
-    val resp_fire        = Input(Bool())
-    val addr             = Input(UInt(memParams.addressWidth.W))
-    val data             = Input(UInt(memParams.dataWidth.W))
-    val globalCycle      = Input(UInt(memParams.globalCycleCountBits.W))
-    val request_id       = Input(UInt(memParams.requestIDBits.W))
-    val internal_req_id  = Input(UInt(memParams.requestIDBits.W))
-    val channel_id       = Input(UInt(log2Ceil(memParams.numberOfChannels).W))
-    val rank_id          = Input(UInt(log2Ceil(memParams.numberOfRanks).W))
-    val bank_id          = Input(UInt(log2Ceil(memParams.numberOfBanks).W))
-    val scheduler_id     = Input(UInt(memParams.requestIDBits.W))
+    val clk             = Input(Clock())
+    val reset           = Input(Bool())
+    val resp_fire       = Input(Bool())
+    val addr            = Input(UInt(memParams.addressWidth.W))
+    val data            = Input(UInt(memParams.dataWidth.W))
+    val globalCycle     = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id      = Input(UInt(memParams.requestIDBits.W))
+    val internal_req_id = Input(UInt(memParams.requestIDBits.W))
+    val channel_id      = Input(UInt(memParams.requestIDBits.W))
+    val rank_id         = Input(UInt(memParams.requestIDBits.W))
+    val bank_id         = Input(UInt(memParams.requestIDBits.W))
+    val scheduler_id    = Input(UInt(memParams.requestIDBits.W))
   })
 
   addResource("/vsrc/CommandQueuePerformanceStatisticsOutput.sv")
@@ -109,20 +109,20 @@ class CommandQueuePerformanceStatistics(params: MemoryConfigurationParameters) e
   perfOut.io.reset := reset.asBool
 
   // Connect input request logging - extract RequestPacket fields
-  perfIn.io.req_fire         := io.in_fire
-  perfIn.io.addr             := io.in_bits.addr
-  perfIn.io.data             := io.in_bits.data
-  perfIn.io.cs               := io.in_bits.cs
-  perfIn.io.ras              := io.in_bits.ras
-  perfIn.io.cas              := io.in_bits.cas
-  perfIn.io.we               := io.in_bits.we
-  perfIn.io.request_id       := io.in_bits.request_id.request_id
-  perfIn.io.internal_req_id  := io.in_bits.request_id.internal_req_id
-  perfIn.io.channel_id       := io.in_bits.request_id.channel_id
-  perfIn.io.rank_id          := io.in_bits.request_id.rank_id
-  perfIn.io.bank_id          := io.in_bits.request_id.bank_id
-  perfIn.io.scheduler_id     := io.in_bits.request_id.scheduler_identifier
-  perfIn.io.globalCycle      := cycleCounter
+  perfIn.io.req_fire        := io.in_fire
+  perfIn.io.addr            := io.in_bits.addr
+  perfIn.io.data            := io.in_bits.data
+  perfIn.io.cs              := io.in_bits.cs
+  perfIn.io.ras             := io.in_bits.ras
+  perfIn.io.cas             := io.in_bits.cas
+  perfIn.io.we              := io.in_bits.we
+  perfIn.io.request_id      := io.in_bits.request_id.request_id
+  perfIn.io.internal_req_id := io.in_bits.request_id.internal_req_id
+  perfIn.io.channel_id      := io.in_bits.request_id.channel_id
+  perfIn.io.rank_id         := io.in_bits.request_id.rank_id
+  perfIn.io.bank_id         := io.in_bits.request_id.bank_id
+  perfIn.io.scheduler_id    := io.in_bits.request_id.scheduler_identifier
+  perfIn.io.globalCycle     := cycleCounter
 
   // Connect output response logging - extract RequestPacket fields
   perfOut.io.resp_fire       := io.out_fire

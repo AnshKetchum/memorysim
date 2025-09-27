@@ -12,7 +12,12 @@ module BankSchedulerPhysicalMemoryResponsePerformanceStatistics #(
     input wire [ADDRESS_WIDTH-1:0] addr,
     input wire [DATA_WIDTH-1:0] data,
     input wire [GLOBAL_CYCLE_BITS-1:0] globalCycle,
-    input wire [REQUEST_ID_BITS-1:0] request_id
+    input wire [REQUEST_ID_BITS-1:0] request_id,
+    input wire [REQUEST_ID_BITS-1:0] internal_req_id,
+    input wire [REQUEST_ID_BITS-1:0] channel_id,   
+    input wire [REQUEST_ID_BITS-1:0] rank_id,
+    input wire [REQUEST_ID_BITS-1:0] bank_id,
+    input wire [REQUEST_ID_BITS-1:0] scheduler_id
 );
     integer file;
     reg [1023:0] filename;
@@ -20,12 +25,14 @@ module BankSchedulerPhysicalMemoryResponsePerformanceStatistics #(
     initial begin
         $sformat(filename, "memory_response_queue_stats_scheduler_rank%0d_bank%0d.csv", RANK, BANK);
         file = $fopen(filename, "w");
-        $fwrite(file, "RequestID,Address,Cycle,Data\n");
+        $fwrite(file, "RequestID,InternalReqID,ChannelID,RankID,BankID,SchedulerID,Address,Data,Cycle\n");
     end
 
     always @(posedge clk) begin
         if (!reset && resp_fire) begin
-            $fwrite(file, "%d,%d,%d,%d\n", request_id, addr, globalCycle, data);
+            $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+                request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id,
+                addr, data, globalCycle);
         end
     end
 endmodule
