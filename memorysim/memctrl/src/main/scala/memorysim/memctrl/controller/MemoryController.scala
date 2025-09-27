@@ -50,10 +50,7 @@ class MultiRankMemoryController(
       val r   = i / banksPerRank
       val b   = i % banksPerRank
       val loc = LocalConfigurationParameters(localConfig.channelIndex, r, b)
-      if (controllerParams.openPagePolicy)
-        Module(new OpenPageBankScheduler(bankParams, loc, params, trackPerformance)).io
-      else
-        Module(new ClosedPageBankScheduler(bankParams, loc, params, trackPerformance)).io
+      Module(new ClosedPageBankScheduler(bankParams, loc, params, trackPerformance)).io
     }
     VecInit(fsms)
   }

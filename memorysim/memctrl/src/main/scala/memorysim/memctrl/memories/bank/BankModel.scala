@@ -96,25 +96,43 @@ class DRAMBankWithWait(
     is(sExec) {
       // perform the operation
       when(doActivate) {
+        if (localConfig.verbose) {
+          printf("Activate\n");
+        }
         rowActive  := true.B
         activeRow  := reqRow
         resp.valid := true.B
       }.elsewhen(doRead) {
         val data = mem.read(activeRow * params.numCols.U + reqCol)
+        if (localConfig.verbose) {
+          printf("Read %x\n", pending.addr);
+        }
         resp.bits.data := data
         resp.valid     := true.B
       }.elsewhen(doWrite) {
         val idx = activeRow * params.numCols.U + reqCol
+        if (localConfig.verbose) {
+          printf("Write\n");
+        }
         mem.write(idx, pending.data)
         resp.bits.data := pending.data
         resp.valid     := true.B
       }.elsewhen(doPrecharge) {
+        if (localConfig.verbose) {
+          printf("Precharge\n");
+        }
         rowActive  := false.B
         resp.valid := true.B
       }.elsewhen(doRefresh) {
+        if (localConfig.verbose) {
+          printf("Refresh\n");
+        }
         rowActive  := false.B
         resp.valid := true.B
       }.elsewhen(doSrefEnter || doSrefExit) {
+        if (localConfig.verbose) {
+          printf("SREF\n");
+        }
         resp.valid := true.B
       }
 

@@ -17,7 +17,7 @@ class Channel(
 
   // Instantiate each Rank and hook up its memCmd port
   val ranks = Seq.tabulate(params.numberOfRanks) { i =>
-    val loc   = LocalConfigurationParameters(localConfig.channelIndex, i, 0)
+    val loc   = localConfig.copy(rankIndex = i)
     val rankM = Module(new Rank(params, bankParams, loc, trackPerformance, queueDepth))
     rankM.io.memCmd <> cmdDemux.io.deq(i)
     rankM

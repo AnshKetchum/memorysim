@@ -28,4 +28,4 @@ class ControllerResponse(params: MemoryConfigurationParameters) extends Bundle {
 
 case class MemoryControllerParameters(
   queueSize:      Int = 256,
-  openPagePolicy: Boolean = true)
+  openPagePolicy: Boolean = false)

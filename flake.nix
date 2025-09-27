@@ -24,13 +24,15 @@
       coursier
       circt-full
       valgrind
+      python310
+      python310Packages.pytest
     ];
   in {
     devShells = {
       "${system}" = {
         default = pkgs.mkShell {
           buildInputs = softwareDeps;
-           # Set up the Ivy cache by creating a directory and exporting IVY_HOME.
+          # Set up the Ivy cache by creating a directory and exporting IVY_HOME.
           shellHook = ''
             export IVY_HOME=$PWD/.ivy2
             mkdir -p $IVY_HOME
@@ -38,6 +40,5 @@
         };
       };
     };
-
   };
 }

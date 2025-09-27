@@ -4,6 +4,7 @@ SRC_DIR      := memorysim/memctrl/src
 VERILOG_DIR  := $(SRC_DIR)/main/resources/vsrc
 SIM_MAIN     := sim_main.cpp
 TOP_MODULE   := MultiChannelSystem
+TOP_MODULE_TRACE   := MultiChannelSystemTrace
 
 # SBT command to run the Chisel elaboration using the legacy driver
 SBT_CMD      := sbt "memctrl/runMain memorysim.memctrl.Elaborate --target-dir $(VERILOG_DIR)"
@@ -36,9 +37,6 @@ verilog:
 
 	sed -i '/BankPhysicalMemoryRequestPerformanceStatistics.sv/d' $(VERILOG_DIR)/MultiChannelSystem.sv
 	sed -i '/BankPhysicalMemoryResponsePerformanceStatistics.sv/d' $(VERILOG_DIR)/MultiChannelSystem.sv
-
-	
-
 
 verilator-trace: 
 	verilator --cc --exe --build -Mdir obj_dir -o V$(TOP_MODULE) $(SRC_DIR)/main/resources/vsrc/MultiChannelSystem.sv ./sims/sim_trace.cpp

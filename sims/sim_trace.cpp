@@ -14,6 +14,7 @@ using namespace std;
 
 unsigned long long sim_cycle = 0;
 static const unsigned long long TIMEOUT = 100000ULL;
+unsigned long long max_request_cycles = 0; // 0 = unlimited
 
 // Trace entry for input stimuli
 struct TraceEntry {
@@ -21,6 +22,7 @@ struct TraceEntry {
     bool is_write;
     unsigned long long cycle;
     unsigned int wdata;
+    unsigned long long enq_cycle = 0; // track when request was enqueued
 };
 
 // Log entry for enqueued requests
@@ -39,8 +41,12 @@ struct ResponseLogEntry {
 
 vector<EnqueueLogEntry> enqueue_log;
 vector<ResponseLogEntry> response_log;
-// Track last written data by address
+
+// Track last written data by address (only updated by explicit writes)
 unordered_map<unsigned, unsigned> last_write_data;
+
+// Pending now supports multiple outstanding requests per address
+unordered_map<unsigned, deque<TraceEntry>> pending;
 
 void write_enqueue_log(const string &filename) {
     ofstream log_file(filename);
@@ -68,10 +74,31 @@ void write_response_log(const string &filename) {
     }
 }
 
+void flush_and_exit(int code = 1) {
+    write_enqueue_log("enqueue_log.txt");
+    write_response_log("response_log.txt");
+    exit(code);
+}
+
 void tick(VMultiChannelSystem* top) {
     top->clock = 0; top->eval();
     top->clock = 1; top->eval();
     sim_cycle++;
+
+    // Check for max_request_cycles violation
+    if (max_request_cycles > 0) {
+        for (auto &kv : pending) {
+            for (const auto &req : kv.second) {
+                if ((sim_cycle - req.enq_cycle) > max_request_cycles) {
+                    cerr << "ERROR: Request to addr 0x" << hex << req.addr
+                         << dec << " exceeded max request cycles of " << max_request_cycles
+                         << " (enqueued at cycle " << req.enq_cycle
+                         << ", now " << sim_cycle << ")" << endl;
+                    flush_and_exit(1);
+                }
+            }
+        }
+    }
 }
 
 vector<TraceEntry> load_trace(const string &filename) {
@@ -85,12 +112,10 @@ vector<TraceEntry> load_trace(const string &filename) {
     string line;
 
     auto strip = [](string s) -> string {
-        // trim leading/trailing whitespace
         size_t a = s.find_first_not_of(" \t\r\n");
         size_t b = s.find_last_not_of(" \t\r\n");
         if (a == string::npos) return "";
         s = s.substr(a, b - a + 1);
-        // remove trailing commas
         while (!s.empty() && (s.back() == ',' || s.back() == ';')) s.pop_back();
         return s;
     };
@@ -102,7 +127,6 @@ vector<TraceEntry> load_trace(const string &filename) {
         string addr_str, op;
         if (!(iss >> addr_str >> op)) continue;
 
-        // collect remaining tokens (could be either: [cycle]  OR  [data cycle])
         vector<string> rest;
         string tok;
         while (iss >> tok) rest.push_back(tok);
@@ -112,49 +136,26 @@ vector<TraceEntry> load_trace(const string &filename) {
             continue;
         }
 
-        // last token is always cycle (per your formats)
         string cycle_str = strip(rest.back());
         unsigned long long cycle = 0;
-        try {
-            cycle = stoull(cycle_str, nullptr, 0); // base 0 handles 0x...
-        } catch (...) {
-            cerr << "WARNING: Couldn't parse cycle '" << cycle_str << "' in line: " << line << endl;
-            continue;
-        }
+        try { cycle = stoull(cycle_str, nullptr, 0); }
+        catch (...) { cerr << "WARNING: Couldn't parse cycle '" << cycle_str << "' in line: " << line << endl; continue; }
 
         TraceEntry e;
-        // parse address (support 0x or decimal)
         string a = strip(addr_str);
-        try {
-            e.addr = static_cast<unsigned int>(stoul(a, nullptr, 0));
-        } catch (...) {
-            cerr << "WARNING: Couldn't parse address '" << a << "' in line: " << line << endl;
-            continue;
-        }
+        try { e.addr = static_cast<unsigned int>(stoul(a, nullptr, 0)); }
+        catch (...) { cerr << "WARNING: Couldn't parse address '" << a << "' in line: " << line << endl; continue; }
 
         e.is_write = (op == "WRITE");
         e.cycle = cycle;
         e.wdata = 0;
 
         if (e.is_write) {
-            // if there's at least two tokens in rest, second-to-last is the data
             if (rest.size() >= 2) {
                 string data_str = strip(rest[rest.size() - 2]);
-                try {
-                    e.wdata = static_cast<unsigned int>(stoul(data_str, nullptr, 0));
-                } catch (...) {
-                    // fallback to rand() if data can't be parsed
-                    e.wdata = static_cast<unsigned int>(rand());
-                    cerr << "WARNING: Couldn't parse write-data '" << data_str
-                         << "'; using random data 0x" << hex << e.wdata << dec
-                         << " for addr 0x" << hex << e.addr << dec << endl;
-                }
-            } else {
-                // no explicit data token — preserve old behavior: use rand()
-                e.wdata = static_cast<unsigned int>(rand());
-            }
-        } else {
-            e.wdata = 0;
+                try { e.wdata = static_cast<unsigned int>(stoul(data_str, nullptr, 0)); }
+                catch (...) { e.wdata = static_cast<unsigned int>(rand()); }
+            } else { e.wdata = static_cast<unsigned int>(rand()); }
         }
 
         trace.push_back(e);
@@ -162,8 +163,7 @@ vector<TraceEntry> load_trace(const string &filename) {
     return trace;
 }
 
-bool enqueue_request(VMultiChannelSystem* top, const TraceEntry &e,
-                     unordered_map<unsigned, TraceEntry>& pending) {
+bool enqueue_request(VMultiChannelSystem* top, TraceEntry &e) {
     top->io_in_valid      = 1;
     top->io_in_bits_addr  = e.addr;
     top->io_in_bits_wr_en = e.is_write;
@@ -184,8 +184,9 @@ bool enqueue_request(VMultiChannelSystem* top, const TraceEntry &e,
     enqueue_log.push_back({e.addr, e.is_write, e.is_write ? static_cast<int>(e.wdata) : -1});
 
     // Record pending for response check
-    pending[e.addr] = e;
-    // Track last write data
+    e.enq_cycle = sim_cycle; // store when this request was enqueued
+    pending[e.addr].push_back(e);
+
     if (e.is_write) last_write_data[e.addr] = e.wdata;
 
     tick(top);
@@ -193,58 +194,61 @@ bool enqueue_request(VMultiChannelSystem* top, const TraceEntry &e,
     return true;
 }
 
-bool dequeue_response(VMultiChannelSystem* top,
-                      unordered_map<unsigned, TraceEntry>& pending) {
+bool dequeue_response(VMultiChannelSystem* top) {
     if (!top->io_out_valid) return false;
 
     unsigned int addr = top->io_out_bits_addr;
     unsigned int data = top->io_out_bits_data;
-    bool is_write_resp = pending.count(addr) ? pending[addr].is_write : false;
 
-    // Console log
-    cout << "[RESP] cycle " << sim_cycle << " ";
-    if (is_write_resp) cout << "WRITE_RESP";
-    else                cout << "READ_RESP ";
-    cout << " addr=0x" << hex << addr << dec
+    bool has_pending = (pending.count(addr) && !pending[addr].empty());
+    bool is_write_resp = false;
+    TraceEntry pending_entry;
+    if (has_pending) {
+        pending_entry = pending[addr].front();
+        is_write_resp = pending_entry.is_write;
+    } else {
+        cerr << "WARNING: Received response for unknown addr 0x" << hex << addr << dec
+             << " at cycle " << sim_cycle << ". Treating as unsolicited/random response." << endl;
+    }
+
+    cout << "[RESP] cycle " << sim_cycle << " "
+         << (is_write_resp ? "WRITE_RESP" : "READ_RESP")
+         << " addr=0x" << hex << addr << dec
          << " data=0x" << hex << data << dec << endl;
 
-    // Record response
     response_log.push_back({addr, is_write_resp, static_cast<int>(data)});
 
-    // Verify
-    if (pending.count(addr)) {
+    if (has_pending) {
         if (is_write_resp) {
-            // Ensure write response matches sent data
-            unsigned sent = pending[addr].wdata;
-            if (data != sent) {
+            if (data != pending_entry.wdata) {
                 cerr << "ERROR: Write mismatch at addr 0x" << hex << addr
-                     << ". Sent=0x" << sent << ", Got=0x" << data << dec << endl;
-                write_enqueue_log("enqueue_log.txt");
-                write_response_log("response_log.txt");
-
-                // tick(top);
-                // tick(top);
-                // exit(1);
+                     << ". Sent=0x" << pending_entry.wdata
+                     << ", Got=0x" << data << dec << endl;
+                flush_and_exit(1);
+            } else {
+                cout << "[OK] Write confirmed for addr 0x" << hex << addr
+                     << " value=0x" << data << dec << endl;
             }
         } else {
-            // Read response: check against last written data if exists
             if (last_write_data.count(addr)) {
-                unsigned last = last_write_data[addr];
-                if (data != last) {
+                unsigned expected = last_write_data[addr];
+                if (data != expected) {
                     cerr << "ERROR: Read mismatch at addr 0x" << hex << addr
-                         << ". Expected=0x" << last << ", Got=0x" << data << dec << endl;
-                    write_enqueue_log("enqueue_log.txt");
-                    write_response_log("response_log.txt");
-                    
-                    // tick(top);
-                    // tick(top);
-                    // exit(1);
+                         << ". Expected=0x" << expected
+                         << ", Got=0x" << data << dec << endl;
+                    flush_and_exit(1);
+                } else {
+                    cout << "[OK] Read matched last write for addr 0x" << hex << addr
+                         << " value=0x" << data << dec << endl;
                 }
+            } else {
+                cout << "[INFO] Read to addr 0x" << hex << addr << dec
+                     << " had no prior write; treating returned value 0x" << hex << data
+                     << dec << " as random." << endl;
             }
         }
-        pending.erase(addr);
-    } else {
-        cerr << "WARNING: Received response for unknown addr 0x" << hex << addr << dec << endl;
+        pending[addr].pop_front();
+        if (pending[addr].empty()) pending.erase(addr);
     }
 
     tick(top);
@@ -260,8 +264,9 @@ int main(int argc, char **argv) {
         string arg = argv[i];
         if (arg == "-t" && i+1 < argc) trace_file = argv[++i];
         else if (arg == "-c" && i+1 < argc) max_cycles = stoull(argv[++i]);
+        else if (arg == "-m" && i+1 < argc) max_request_cycles = stoull(argv[++i]);
         else {
-            cerr << "Usage: " << argv[0] << " [-t <trace>] [-c <max_cycles>]" << endl;
+            cerr << "Usage: " << argv[0] << " [-t <trace>] [-c <max_cycles>] [-m <max_request_cycles>]" << endl;
             write_enqueue_log("enqueue_log.txt");
             write_response_log("response_log.txt");
             return 1;
@@ -269,9 +274,8 @@ int main(int argc, char **argv) {
     }
 
     VMultiChannelSystem *top = new VMultiChannelSystem;
-    srand(time(nullptr));
+    srand(static_cast<unsigned>(time(nullptr)));
 
-    // Reset
     top->reset = 1;
     for (int i = 0; i < 5; ++i) tick(top);
     top->reset = 0;
@@ -281,21 +285,27 @@ int main(int argc, char **argv) {
 
     auto trace = load_trace(trace_file);
     size_t idx = 0;
-    unordered_map<unsigned, TraceEntry> pending;
 
     while ((idx < trace.size() || !pending.empty()) && sim_cycle < max_cycles) {
         if (idx < trace.size() && sim_cycle >= trace[idx].cycle) {
-            enqueue_request(top, trace[idx], pending);
+            if (!enqueue_request(top, trace[idx])) {
+                cerr << "ERROR: Failed to enqueue request from trace at index " << idx << endl;
+                flush_and_exit(1);
+            }
             idx++;
             continue;
         }
-        if (!dequeue_response(top, pending)) tick(top);
+        if (!dequeue_response(top)) tick(top);
     }
 
-    if (sim_cycle >= max_cycles)
+    if (sim_cycle >= max_cycles) {
         cerr << "ERROR: Max cycles (" << max_cycles << ") reached." << endl;
-    else
+        write_enqueue_log("enqueue_log.txt");
+        write_response_log("response_log.txt");
+        return 1;
+    } else {
         cout << "Simulation completed in " << sim_cycle << " cycles." << endl;
+    }
 
     write_enqueue_log("enqueue_log.txt");
     write_response_log("response_log.txt");
