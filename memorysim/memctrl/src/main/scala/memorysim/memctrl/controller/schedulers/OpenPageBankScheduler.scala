@@ -167,10 +167,10 @@ class OpenPageBankScheduler(
       when(requestActive) {
         when(idleCounter >= selfRefreshThreshold && elapsed(lastRefresh, params.tREFI.U)) {
           state          := sSrefEnter
-          reqPacketReg   := refreshReqPacket
+          // Don't overwrite reqPacketReg - use refreshReqPacket directly in commands
           refreshCounter := refreshCounter + 1.U
         }.elsewhen(elapsed(lastRefresh, params.tREFI.U)) {
-          reqPacketReg   := refreshReqPacket
+          // Don't overwrite reqPacketReg - use refreshReqPacket directly in commands
           reqAddrReg     := refreshAddr
           state          := sRefresh
           refreshCounter := refreshCounter + 1.U
@@ -291,8 +291,7 @@ class OpenPageBankScheduler(
     is(sSref) {
       when(io.req.valid) {
         state          := sSrefExit
-        // Generate new refresh packet for exit
-        reqPacketReg   := createRequestPacket(0.U, true.B, refreshCounter)
+        // Don't overwrite reqPacketReg - it still contains the original request
         refreshCounter := refreshCounter + 1.U
       }
     }
