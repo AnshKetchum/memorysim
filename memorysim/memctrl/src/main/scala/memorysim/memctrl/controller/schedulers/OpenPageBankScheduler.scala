@@ -44,7 +44,6 @@ class OpenPageBankScheduler(
   // --------------------------------------------------
   // Track currently open row for this bank
   val rowBits      = 32 - (log2Ceil(memoryConfig.numberOfRanks) + log2Ceil(memoryConfig.numberOfBanks))
-  // store open row and an explicit valid bit so reset values are literal constants
   val openRow      = Reg(UInt(rowBits.W))
   val openRowValid = RegInit(false.B)
 
@@ -57,7 +56,7 @@ class OpenPageBankScheduler(
     reqPacket.channel_id           := localConfiguration.channelIndex.U
     reqPacket.rank_id              := localConfiguration.rankIndex.U
     reqPacket.bank_id              := localConfiguration.bankIndex.U
-    reqPacket.scheduler_identifier := localConfiguration.bankIndex.U // Use bankIndex as scheduler ID
+    reqPacket.scheduler_identifier := localConfiguration.bankIndex.U
     reqPacket
   }
 
@@ -98,8 +97,9 @@ class OpenPageBankScheduler(
   val refreshReqId = reqIDGen.io.refreshReqId
   val refreshAddr  = reqIDGen.io.refreshAddr
 
-  // Create refresh request packet
-  val refreshReqPacket = createRequestPacket(0.U, true.B, refreshCounter)
+  // Create refresh request packet as a Wire so it reflects the current refreshCounter value
+  val refreshReqPacket = Wire(new RequestPacket(memoryConfig))
+  refreshReqPacket := createRequestPacket(0.U, true.B, refreshCounter)
 
   // --------------------------------------------------
   // Extract row from an address
@@ -113,6 +113,8 @@ class OpenPageBankScheduler(
   // Default I/O
   io.req.ready := (state === sIdle)
   val cmdReg = Wire(new PhysicalMemoryCommand(memoryConfig))
+
+  // Default command fields are the latched request fields
   cmdReg.addr       := reqAddrReg
   cmdReg.data       := reqWdataReg
   cmdReg.cs         := true.B
@@ -122,6 +124,7 @@ class OpenPageBankScheduler(
   cmdReg.request_id := reqPacketReg
   io.cmdOut.bits    := cmdReg
 
+  // Issue only when in issue states, a command has not already been sent, and cs is de-asserted for the command
   val issueStates = Seq(sActivate, sRead, sWrite, sRefresh)
   io.cmdOut.valid := issueStates.map(_ === state).reduce(_ || _) && !sentCmd && !cmdReg.cs
 
@@ -164,14 +167,16 @@ class OpenPageBankScheduler(
       }.elsewhen(state === sIdle) {
         idleCounter := idleCounter + 1.U
       }
+
       when(requestActive) {
+        // NOTE: do NOT overwrite reqAddrReg / reqPacketReg when we decide to issue a refresh.
+        // Use refreshReqPacket and refreshAddr only for the refresh command itself.
         when(idleCounter >= selfRefreshThreshold && elapsed(lastRefresh, params.tREFI.U)) {
           state          := sSrefEnter
-          // Don't overwrite reqPacketReg - use refreshReqPacket directly in commands
+          // increment refreshCounter to reserve an internal id for the soon-to-be-issued SREF
           refreshCounter := refreshCounter + 1.U
         }.elsewhen(elapsed(lastRefresh, params.tREFI.U)) {
-          // Don't overwrite reqPacketReg - use refreshReqPacket directly in commands
-          reqAddrReg     := refreshAddr
+          // enter refresh state; do not clobber the latched request state
           state          := sRefresh
           refreshCounter := refreshCounter + 1.U
         }.elsewhen(!openRowValid || (openRow =/= reqRow)) {
@@ -185,8 +190,10 @@ class OpenPageBankScheduler(
     }
 
     is(sActivate) {
+      // Build an ACTIVATE command that targets reqAddrReg (latched request)
       when(!sentCmd) {
         cmdReg.cs := false.B; cmdReg.ras := false.B; cmdReg.cas := true.B; cmdReg.we := true.B
+        // request_id and addr already default to reqPacketReg and reqAddrReg
       }
       when(io.cmdOut.fire) {
         sentCmd         := true.B
@@ -226,7 +233,7 @@ class OpenPageBankScheduler(
         responseDataReg := io.phyResp.bits.data
         lastReadEnd     := cycleCounter
         sentCmd         := false.B
-        state           := sDone // skip precharge for open-page
+        state           := sDone // open-page: skip precharge
 
         if (localConfiguration.verbose) {
           printf(p"[Cycle $cycleCounter] CMD FIRE: READ\n")
@@ -246,7 +253,7 @@ class OpenPageBankScheduler(
       when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, issuedPacketReg)) {
         sentCmd         := false.B
         responseDataReg := io.phyResp.bits.data
-        state           := sDone // skip precharge for open-page
+        state           := sDone // open-page: skip precharge
         if (localConfiguration.verbose) {
           printf(p"[Cycle $cycleCounter] CMD FIRE: WRITE\n")
         }
@@ -254,7 +261,7 @@ class OpenPageBankScheduler(
     }
 
     is(sPrecharge) {
-      // now unused in open-page policy
+      // now unused in open-page policy, kept for completeness
       when(!sentCmd) {
         cmdReg.cs := false.B; cmdReg.ras := false.B; cmdReg.cas := true.B; cmdReg.we := false.B
       }
@@ -274,9 +281,11 @@ class OpenPageBankScheduler(
     }
 
     is(sSrefEnter) {
+      // Enter self-refresh: issue special internal request (refreshReqPacket)
       when(!sentCmd) {
         cmdReg.cs         := false.B; cmdReg.ras := false.B; cmdReg.cas := false.B; cmdReg.we := false.B
         cmdReg.request_id := refreshReqPacket
+        // important: do NOT write to reqAddrReg here
       }
       when(io.cmdOut.fire) {
         sentCmd         := true.B
@@ -291,7 +300,6 @@ class OpenPageBankScheduler(
     is(sSref) {
       when(io.req.valid) {
         state          := sSrefExit
-        // Don't overwrite reqPacketReg - it still contains the original request
         refreshCounter := refreshCounter + 1.U
       }
     }
@@ -319,6 +327,7 @@ class OpenPageBankScheduler(
     }
 
     is(sRefresh) {
+      // Issue a refresh internal command without clobbering the latched request fields
       when(!sentCmd) {
         cmdReg.cs         := false.B; cmdReg.ras := false.B; cmdReg.cas := false.B; cmdReg.we := true.B
         cmdReg.addr       := refreshAddr
