@@ -12,7 +12,7 @@ class DRAMBankWithWait(
   memConfig:        MemoryConfigurationParameters,
   localConfig:      LocalConfigurationParameters,
   trackPerformance: Boolean = false)
-    extends PhysicalBankModuleBase {
+    extends PhysicalBankModuleBase(memConfig) {
 
   // I/O
   val cmd        = io.memCmd  // Decoupled[BankMemoryCommand]
@@ -28,7 +28,7 @@ class DRAMBankWithWait(
   val state                                   = RegInit(sIdle)
 
   // latch incoming command
-  val pending = Reg(new BankMemoryCommand)
+  val pending = Reg(new BankMemoryCommand(memConfig))
 
   // countdown register
   val timer = RegInit(0.U(32.W))
@@ -38,7 +38,7 @@ class DRAMBankWithWait(
   val activeRow = RegInit(0.U(log2Ceil(params.numRows).W))
 
   // underlying memory array
-  val mem = Mem(params.addressSpaceSize, UInt(32.W))
+  val mem = Mem(params.addressSpaceSize, UInt(memConfig.dataWidth.W))
 
   // decode bits from pending
   val cs_p  = !pending.cs
@@ -72,7 +72,9 @@ class DRAMBankWithWait(
   switch(state) {
     is(sIdle) {
       when(cmd.fire) {
-        printf("[Bank Model] Received command. time = %d \n", waitCycles)
+        if (localConfig.verbose) {
+          printf("[Bank Model] Received command. time = %d \n", waitCycles)
+        }
         pending := cmd.bits
         timer   := waitCycles
         state   := sWait
@@ -82,7 +84,9 @@ class DRAMBankWithWait(
     is(sWait) {
       // count down external wait
       when(timer === 0.U) {
-        printf("[Bank Model] Timer hit zero.\n")
+        if (localConfig.verbose) {
+          printf("[Bank Model] Timer hit zero.\n")
+        }
         state := sExec
       }.otherwise {
         timer := timer - 1.U
@@ -92,25 +96,43 @@ class DRAMBankWithWait(
     is(sExec) {
       // perform the operation
       when(doActivate) {
+        if (localConfig.verbose) {
+          printf("Activate\n");
+        }
         rowActive  := true.B
         activeRow  := reqRow
         resp.valid := true.B
       }.elsewhen(doRead) {
         val data = mem.read(activeRow * params.numCols.U + reqCol)
+        if (localConfig.verbose) {
+          printf("Read %x\n", pending.addr);
+        }
         resp.bits.data := data
         resp.valid     := true.B
       }.elsewhen(doWrite) {
         val idx = activeRow * params.numCols.U + reqCol
+        if (localConfig.verbose) {
+          printf("Write\n");
+        }
         mem.write(idx, pending.data)
         resp.bits.data := pending.data
         resp.valid     := true.B
       }.elsewhen(doPrecharge) {
+        if (localConfig.verbose) {
+          printf("Precharge\n");
+        }
         rowActive  := false.B
         resp.valid := true.B
       }.elsewhen(doRefresh) {
+        if (localConfig.verbose) {
+          printf("Refresh\n");
+        }
         rowActive  := false.B
         resp.valid := true.B
       }.elsewhen(doSrefEnter || doSrefExit) {
+        if (localConfig.verbose) {
+          printf("SREF\n");
+        }
         resp.valid := true.B
       }
 
@@ -129,7 +151,7 @@ class DRAMBankWithWait(
 
   // optional performance tracking
   if (trackPerformance) {
-    val perf = Module(new BankPerformanceStatistics(localConfig))
+    val perf = Module(new BankPerformanceStatistics(localConfig, memConfig))
     perf.io.mem_request_fire  := io.memCmd.fire
     perf.io.mem_request_bits  := io.memCmd.bits
     perf.io.mem_response_fire := io.phyResp.fire

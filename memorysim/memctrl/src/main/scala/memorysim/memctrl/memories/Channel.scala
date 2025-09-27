@@ -1,5 +1,4 @@
 package memorysim.memctrl
-
 import chisel3._
 import chisel3.util._
 
@@ -9,7 +8,7 @@ class Channel(
   localConfig:      LocalConfigurationParameters,
   trackPerformance: Boolean = false,
   queueDepth:       Int = 256)
-    extends PhysicalMemoryModuleBase {
+    extends PhysicalMemoryModuleBase(params) {
 
   // ---- Command side: multi‐rank demux ----
   // Steer incoming commands into per‐rank FIFOs
@@ -18,7 +17,7 @@ class Channel(
 
   // Instantiate each Rank and hook up its memCmd port
   val ranks = Seq.tabulate(params.numberOfRanks) { i =>
-    val loc   = LocalConfigurationParameters(localConfig.channelIndex, i, 0)
+    val loc   = localConfig.copy(rankIndex = i)
     val rankM = Module(new Rank(params, bankParams, loc, trackPerformance, queueDepth))
     rankM.io.memCmd <> cmdDemux.io.deq(i)
     rankM
@@ -28,34 +27,43 @@ class Channel(
   // io.reqQueueCounts := cmdDemux.io.counts
 
   // ---- Response side: original RR‐arbiter logic ----
-  // Gather each rank’s responses into a per-rank queue
+  // Gather each rank's responses into a per-rank queue
   val respQueues = Seq.fill(params.numberOfRanks) {
-    Module(new Queue(new PhysicalMemoryResponse, entries = queueDepth))
+    Module(new Queue(new PhysicalMemoryResponse(params), entries = queueDepth))
   }
 
   for ((rankM, i) <- ranks.zipWithIndex) {
-    // plug the rank’s phyResp into respQueues(i)
+    // plug the rank's phyResp into respQueues(i)
     respQueues(i).io.enq.bits  := rankM.io.phyResp.bits
     respQueues(i).io.enq.valid := rankM.io.phyResp.valid
     rankM.io.phyResp.ready     := respQueues(i).io.enq.ready
 
     when(respQueues(i).io.enq.fire) {
-      printf("[Channel] Response enqueued from Rank %d\n", i.U)
-      printf(
-        " [Channel]  -> request_id = %d, data = 0x%x\n",
-        rankM.io.phyResp.bits.request_id,
-        rankM.io.phyResp.bits.data
-      )
+      if (localConfig.verbose) { // Scala boolean check at elaboration time
+        printf("[Channel] Response enqueued from Rank %d\n", i.U)
+        printf(
+          " [Channel]  -> ext_req_id = %d, int_req_id = %d, data = 0x%x\n",
+          rankM.io.phyResp.bits.request_id.request_id,
+          rankM.io.phyResp.bits.request_id.internal_req_id,
+          rankM.io.phyResp.bits.data
+        )
+        printf(
+          " [Channel]  -> channel_id = %d, rank_id = %d, bank_id = %d\n",
+          rankM.io.phyResp.bits.request_id.channel_id,
+          rankM.io.phyResp.bits.request_id.rank_id,
+          rankM.io.phyResp.bits.request_id.bank_id
+        )
+      }
     }
   }
 
-  // Round-robin across all ranks’ respQueues
-  val respArb = Module(new RRArbiter(new PhysicalMemoryResponse, params.numberOfRanks))
+  // Round-robin across all ranks' respQueues
+  val respArb = Module(new RRArbiter(new PhysicalMemoryResponse(params), params.numberOfRanks))
   for (i <- 0 until params.numberOfRanks) {
     respArb.io.in(i) <> respQueues(i).io.deq
   }
 
-  // Drive the channel’s phyResp port from the arbiter
+  // Drive the channel's phyResp port from the arbiter
   io.phyResp <> respArb.io.out
 
   // ---- Active‐submemory aggregation ----

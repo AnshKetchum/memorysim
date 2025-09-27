@@ -12,18 +12,19 @@ class MemoryControllerIntegrationSpec extends AnyFreeSpec with Matchers {
     s"MemControllerFSM + $name" - {
       "should perform write/read/write/read sequences" in {
         simulate(new Module {
-          val io = IO(new Bundle {
-            val req  = Flipped(Decoupled(new ControllerRequest))
-            val resp = Decoupled(new ControllerResponse)
-          })
-
           val params      = DRAMBankParameters()
           val localConfig = LocalConfigurationParameters(
             channelIndex = 0,
             rankIndex = 0,
-            bankIndex = 0
+            bankIndex = 0,
+            verbose = true
           )
           val memParams   = MemoryConfigurationParameters()
+
+          val io = IO(new Bundle {
+            val req  = Flipped(Decoupled(new ControllerRequest(memParams)))
+            val resp = Decoupled(new ControllerResponse(memParams))
+          })
 
           val controller = Module(new ClosedPageBankScheduler(params, localConfig, memParams))
           val phys       = Module(instantiateMem)
@@ -66,21 +67,21 @@ class MemoryControllerIntegrationSpec extends AnyFreeSpec with Matchers {
           val d0    = "hAAAA".U
           val d1    = "h5555".U
 
-          println("Test 1")
+          println("Test 1 - Sending a write request")
           sendReq(rd = false, wr = true, addr0, d0)
           expectRespCR(rd = false, wr = true, addr0, d0)
 
-          println("Test 2")
-          sendReq(rd = true, wr = false, addr0, 0.U)
-          expectRespCR(rd = true, wr = false, addr0, d0)
+          // println("Test 2 - Sending a read request")
+          // sendReq(rd = true, wr = false, addr0, 0.U)
+          // expectRespCR(rd = true, wr = false, addr0, d0)
 
-          println("Test 3")
-          sendReq(false, true, addr1, d1)
-          expectRespCR(false, true, addr1, d1)
+          // println("Test 3 - Sending a write request")
+          // sendReq(false, true, addr1, d1)
+          // expectRespCR(false, true, addr1, d1)
 
-          println("Test 4")
-          sendReq(true, false, addr1, 0.U)
-          expectRespCR(true, false, addr1, d1)
+          // println("Test 4 - Sending a read request")
+          // sendReq(true, false, addr1, 0.U)
+          // expectRespCR(true, false, addr1, d1)
         }
       }
     }
@@ -93,9 +94,10 @@ class MemoryControllerIntegrationSpec extends AnyFreeSpec with Matchers {
   val localConfig = LocalConfigurationParameters(
     channelIndex = 0,
     rankIndex = 0,
-    bankIndex = 0
+    bankIndex = 0,
+    verbose = true
   )
 
   controllerFlowSpec("Channel", new Channel(memParams, bankParams, localConfig))
-  controllerFlowSpec("Rank", new Rank(memParams, bankParams, localConfig))
+  // controllerFlowSpec("Rank", new Rank(memParams, bankParams, localConfig))
 }

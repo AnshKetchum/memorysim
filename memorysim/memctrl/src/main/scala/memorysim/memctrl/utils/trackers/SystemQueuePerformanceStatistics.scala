@@ -11,20 +11,29 @@ import chisel3.util._
   *   - req_bits: the ControllerRequest transferred.
   *   - globalCycle: a cycle count for timestamping.
   */
-class SystemQueuePerformanceStatisticsInput extends BlackBox with HasBlackBoxResource {
+class SystemQueuePerformanceStatisticsInput(val memParams: MemoryConfigurationParameters)
+    extends BlackBox(
+      Map(
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
+      )
+    )
+    with HasBlackBoxResource {
+
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val req_fire    = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(32.W))
-    val wdata       = Input(UInt(32.W))
-    val globalCycle = Input(UInt(64.W))
-    val request_id  = Input(UInt(32.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val wdata       = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
-  println("Hi IN")
   addResource("/vsrc/SystemQueuePerformanceStatisticsInput.sv")
 }
 
@@ -35,21 +44,30 @@ class SystemQueuePerformanceStatisticsInput extends BlackBox with HasBlackBoxRes
   *   - resp_bits: the ControllerResponse transferred.
   *   - globalCycle: the global cycle counter.
   */
-class SystemQueuePerformanceStatisticsOutput extends BlackBox with HasBlackBoxResource {
+class SystemQueuePerformanceStatisticsOutput(val memParams: MemoryConfigurationParameters)
+    extends BlackBox(
+      Map(
+        "ADDRESS_WIDTH"     -> memParams.addressWidth,
+        "DATA_WIDTH"        -> memParams.dataWidth,
+        "GLOBAL_CYCLE_BITS" -> memParams.globalCycleCountBits,
+        "REQUEST_ID_BITS"   -> memParams.requestIDBits
+      )
+    )
+    with HasBlackBoxResource {
+
   val io = IO(new Bundle {
     val clk         = Input(Clock())
     val reset       = Input(Bool())
     val resp_fire   = Input(Bool())
     val rd_en       = Input(Bool())
     val wr_en       = Input(Bool())
-    val addr        = Input(UInt(32.W))
-    val wdata       = Input(UInt(32.W))
-    val data        = Input(UInt(32.W))
-    val globalCycle = Input(UInt(64.W))
-    val request_id  = Input(UInt(32.W))
+    val addr        = Input(UInt(memParams.addressWidth.W))
+    val wdata       = Input(UInt(memParams.dataWidth.W))
+    val data        = Input(UInt(memParams.dataWidth.W))
+    val globalCycle = Input(UInt(memParams.globalCycleCountBits.W))
+    val request_id  = Input(UInt(memParams.requestIDBits.W))
   })
 
-  println("Hi OUT")
   addResource("/vsrc/SystemQueuePerformanceStatisticsOutput.sv")
 }
 
@@ -59,21 +77,21 @@ class SystemQueuePerformanceStatisticsOutput extends BlackBox with HasBlackBoxRe
   *   - in_fire and in_bits represent a successful (fire) input transaction.
   *   - out_fire and out_bits represent a successful (fire) output transaction.
   */
-class SystemQueuePerformanceStatistics extends Module {
+class SystemQueuePerformanceStatistics(params: MemoryConfigurationParameters) extends Module {
   val io = IO(new Bundle {
     val in_fire  = Input(Bool())
-    val in_bits  = Input(new ControllerRequest)
+    val in_bits  = Input(new ControllerRequest(params))
     val out_fire = Input(Bool())
-    val out_bits = Input(new ControllerResponse)
+    val out_bits = Input(new ControllerResponse(params))
   })
 
   // Global cycle counter (64 bits)
-  val cycleCounter = RegInit(0.U(64.W))
+  val cycleCounter = RegInit(0.U(params.globalCycleCountBits.W))
   cycleCounter := cycleCounter + 1.U
 
   // Instantiate the BlackBox modules
-  val perfIn  = Module(new SystemQueuePerformanceStatisticsInput)
-  val perfOut = Module(new SystemQueuePerformanceStatisticsOutput)
+  val perfIn  = Module(new SystemQueuePerformanceStatisticsInput(params))
+  val perfOut = Module(new SystemQueuePerformanceStatisticsOutput(params))
 
   // Connect clock and reset
   perfIn.io.clk    := clock

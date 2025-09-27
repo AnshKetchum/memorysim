@@ -7,6 +7,3 @@ format:
 
 format-test:
 	sbt scalafmtCheckAll
-
-test:
-	sbt "memctrl/test"

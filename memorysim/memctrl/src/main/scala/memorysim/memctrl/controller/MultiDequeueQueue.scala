@@ -12,8 +12,8 @@ class MultiDeqQueue(
   depth:         Int)
     extends Module {
   val io = IO(new Bundle {
-    val enq    = Flipped(Decoupled(new ControllerRequest))
-    val deq    = Vec(totalBankFSMs, Decoupled(new ControllerRequest))
+    val enq    = Flipped(Decoupled(new ControllerRequest(params)))
+    val deq    = Vec(totalBankFSMs, Decoupled(new ControllerRequest(params)))
     val counts = Output(Vec(totalBankFSMs, UInt(log2Ceil(depth + 1).W)))
   })
 
@@ -26,7 +26,7 @@ class MultiDeqQueue(
 
   // Instantiate one Queue per FSM
   val queues = Seq.fill(totalBankFSMs) {
-    Module(new Queue(new ControllerRequest, entries = depth))
+    Module(new Queue(new ControllerRequest(params), entries = depth))
   }
 
   // Default wiring

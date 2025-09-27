@@ -3,29 +3,6 @@ package memorysim.memctrl
 import chisel3._
 import chisel3.util._
 
-case class SingleChannelMemoryConfigurationParams(
-  memConfiguration:        MemoryConfigurationParameters = MemoryConfigurationParameters(),
-  bankConfiguration:       DRAMBankParameters = DRAMBankParameters(),
-  controllerConfiguration: MemoryControllerParameters = MemoryControllerParameters(),
-  trackPerformance:        Boolean = true)
-
-/** Updated top-level memory system I/O using the new names. */
-class MemorySystemIO(params: MemoryConfigurationParameters) extends Bundle {
-  val in  = Flipped(Decoupled(new SystemRequest))
-  val out = Decoupled(new ControllerResponse)
-
-  // Internals-Monitoring Signals
-  val rankState         = Output(Vec(params.numberOfRanks, UInt(3.W)))
-  val reqQueueCount     = Output(UInt(4.W))
-  val respQueueCount    = Output(UInt(4.W))
-  val fsmReqQueueCounts = Output(
-    Vec(params.numberOfRanks * params.numberOfBanks, UInt(3.W))
-  )
-
-  // New signal to expose active ranks count
-  val activeRanks = Output(UInt(log2Ceil(params.numberOfRanks + 1).W))
-}
-
 class SingleChannelSystem(
   params:      SingleChannelMemoryConfigurationParams,
   localConfig: LocalConfigurationParameters)
@@ -58,7 +35,7 @@ class SingleChannelSystem(
   memory_controller.io.phyResp <> channel.io.phyResp
 
   // Internal request ID register
-  val requestId = RegInit(0.U(32.W))
+  val requestId = RegInit(1.U(params.memConfiguration.requestIDBits.W))
 
   // Assume io.in and io.out are Decoupled interfaces.
   val inputFire  = io.in.valid && io.in.ready
@@ -73,7 +50,7 @@ class SingleChannelSystem(
   memory_controller.io.in.valid := io.in.valid
   io.in.ready                   := memory_controller.io.in.ready
 
-  val ctrlReq = Wire(new ControllerRequest)
+  val ctrlReq = Wire(new ControllerRequest(params.memConfiguration))
   ctrlReq.rd_en      := io.in.bits.rd_en
   ctrlReq.wr_en      := io.in.bits.wr_en
   ctrlReq.addr       := io.in.bits.addr
@@ -87,7 +64,7 @@ class SingleChannelSystem(
 
   // If performance tracking is enabled:
   if (params.trackPerformance) {
-    val perfStats = Module(new SystemQueuePerformanceStatistics)
+    val perfStats = Module(new SystemQueuePerformanceStatistics(params.memConfiguration))
     // Connect the performance monitor to the tap signals.
     perfStats.io.in_fire  := inputFire
     perfStats.io.in_bits  := ctrlReq

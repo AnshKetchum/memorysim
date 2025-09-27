@@ -3,30 +3,13 @@ package memorysim.memctrl
 import chisel3._
 import chisel3.util._
 
-object DRAMOp {
-  val ACTIVATE        = 0.U(3.W)
-  val READ            = 1.U(3.W)
-  val WRITE           = 2.U(3.W)
-  val READ_PRECHARGE  = 3.U(3.W)
-  val WRITE_PRECHARGE = 4.U(3.W)
-  val PRECHARGE       = 5.U(3.W)
-  val REFRESH         = 6.U(3.W)
-  val SREF_ENTER      = 7.U(3.W)
-  val N_OPS           = 8
-  // Scala ints for matching
-  val ACTIVATE_INT    = 0
-  val READ_INT        = 1
-  val WRITE_INT       = 2
-  val RP_INT          = 3
-  val WP_INT          = 4
-  val PRE_INT         = 5
-  val REF_INT         = 6
-  val SREF_INT        = 7
-}
-
-class TimingEngine(params: DRAMBankParameters) extends Module {
+class SingleCycleTimingEngine(
+  params:      DRAMBankParameters,
+  memConfig:   MemoryConfigurationParameters,
+  localConfig: LocalConfigurationParameters)
+    extends Module {
   val io = IO(new Bundle {
-    val cmd        = Flipped(Decoupled(new BankMemoryCommand))
+    val cmd        = Flipped(Decoupled(new BankMemoryCommand(memConfig)))
     val waitCycles = Output(UInt(32.W))
   })
 
@@ -52,58 +35,40 @@ class TimingEngine(params: DRAMBankParameters) extends Module {
 
   // When a new command fires, shift curr->prev and decode new opcode
   when(io.cmd.fire) {
-    printf(
-      "Received command - cs = %d ras = %d cas = %d we = %d\n",
-      io.cmd.bits.cs,
-      io.cmd.bits.ras,
-      io.cmd.bits.cas,
-      io.cmd.bits.we
-    )
-    printf("Prev = %d, Cur = %d Wait = %d\n", prevOp, currOp, io.waitCycles)
+    if (localConfig.verbose) {
+      printf(
+        "Received command - cs = %d ras = %d cas = %d we = %d\n",
+        io.cmd.bits.cs,
+        io.cmd.bits.ras,
+        io.cmd.bits.cas,
+        io.cmd.bits.we
+      )
+      printf("Prev = %d, Cur = %d Wait = %d\n", prevOp, currOp, io.waitCycles)
+    }
     prevOp := currOp
   }
 
-  // ----------------------------------------------------------------
-  // 1) All same‑bank delays as functions of base params
-  // ----------------------------------------------------------------
-  val burst  = params.burst_cycle.U(32.W)
-  val tCCD_L = params.tCCD_L.U(32.W)
-  val tWTR_L = params.tWTR_L.U(32.W)
-  val tRTRS  = params.tRTRS.U(32.W)
-  val RL     = params.RL.U(32.W)
-  val WL     = params.WL.U(32.W)
-  val AL     = params.AL.U(32.W)
-  val tRTP   = params.tRTP.U(32.W)
-  val tWR    = params.tWR.U(32.W)
-  val tRP    = params.tRP.U(32.W)
-  val tRAS   = params.tRAS.U(32.W)
-  val tRFC   = params.tRFC.U(32.W)
-  val tRRD_L = params.tRRD_L.U(32.W)
-  val tRCDRD = params.tRCDRD.U(32.W)
-  val tRCDWR = params.tRCDWR.U(32.W)
-  val CWL    = params.CWL.U(32.W)
-  val tRTP_S = params.tRTP_S.U(32.W)
-  val tXS    = params.tXS.U(32.W)
+  val tXS = 1.U(32.W) // params.tXS.U(32.W)
 
   // Derived delays:
-  val read_to_read_l    = Mux(burst > tCCD_L, burst, tCCD_L)
-  val read_to_write     = RL + burst - WL + tRTRS
-  val read_to_precharge = AL + tRTP
-  val readp_to_activate = AL + burst + tRTP + tRP
+  val read_to_read_l    = 1.U(32.W)
+  val read_to_write     = 1.U(32.W)
+  val read_to_precharge = 1.U(32.W)
+  val readp_to_activate = 1.U(32.W)
 
-  val write_to_read_l    = WL + burst + tRTRS - RL
-  val write_to_write_l   = Mux(burst > tCCD_L, burst, tCCD_L)
-  val write_to_precharge = WL + burst + tWR
-  val writep_to_activate = write_to_precharge + tRP
+  val write_to_read_l    = 1.U(32.W)
+  val write_to_write_l   = 1.U(32.W)
+  val write_to_precharge = 1.U(32.W)
+  val writep_to_activate = 1.U(32.W)
 
-  val precharge_to_activate = tRP
+  val precharge_to_activate = 1.U(32.W)
 
-  val activate_to_act_l     = tRRD_L
-  val activate_to_read      = tRCDRD
-  val activate_to_write     = tRCDWR
-  val activate_to_precharge = tRAS
+  val activate_to_act_l     = 1.U(32.W)
+  val activate_to_read      = 1.U(32.W)
+  val activate_to_write     = 1.U(32.W)
+  val activate_to_precharge = 1.U(32.W)
 
-  val refresh_to_activate = tRFC
+  val refresh_to_activate = 1.U(32.W)
 
   // ----------------------------------------------------------------
   // 2) same‑bank timing matrix

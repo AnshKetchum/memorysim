@@ -14,10 +14,10 @@ class MultiRankMemoryController(
   trackPerformance: Boolean = false)
     extends Module {
   val io = IO(new Bundle {
-    val in      = Flipped(Decoupled(new ControllerRequest))
-    val out     = Decoupled(new ControllerResponse)
-    val memCmd  = Decoupled(new PhysicalMemoryCommand)
-    val phyResp = Flipped(Decoupled(new PhysicalMemoryResponse))
+    val in      = Flipped(Decoupled(new ControllerRequest(params)))
+    val out     = Decoupled(new ControllerResponse(params))
+    val memCmd  = Decoupled(new PhysicalMemoryCommand(params))
+    val phyResp = Flipped(Decoupled(new PhysicalMemoryResponse(params)))
 
     // Monitoring
     val rankState         = Output(Vec(params.numberOfRanks, UInt(3.W)))
@@ -29,15 +29,15 @@ class MultiRankMemoryController(
   })
 
   // ------ Global request & response FIFOs ------
-  val reqQueue  = Module(new Queue(new ControllerRequest, entries = controllerParams.queueSize))
-  val respQueue = Module(new Queue(new ControllerResponse, entries = controllerParams.queueSize))
+  val reqQueue  = Module(new Queue(new ControllerRequest(params), entries = controllerParams.queueSize))
+  val respQueue = Module(new Queue(new ControllerResponse(params), entries = controllerParams.queueSize))
   reqQueue.io.enq <> io.in
   io.out <> respQueue.io.deq
   io.reqQueueCount  := reqQueue.io.count
   io.respQueueCount := respQueue.io.count
 
   // ------ Physical command queue ------
-  val cmdQueue = Module(new Queue(new PhysicalMemoryCommand, entries = controllerParams.queueSize))
+  val cmdQueue = Module(new Queue(new PhysicalMemoryCommand(params), entries = controllerParams.queueSize))
   io.memCmd <> cmdQueue.io.deq
 
   // ------ Bank/FSM setup ------
@@ -50,10 +50,7 @@ class MultiRankMemoryController(
       val r   = i / banksPerRank
       val b   = i % banksPerRank
       val loc = LocalConfigurationParameters(localConfig.channelIndex, r, b)
-      if (controllerParams.openPagePolicy)
-        Module(new OpenPageBankScheduler(bankParams, loc, params, trackPerformance)).io
-      else
-        Module(new ClosedPageBankScheduler(bankParams, loc, params, trackPerformance)).io
+      Module(new ClosedPageBankScheduler(bankParams, loc, params, trackPerformance)).io
     }
     VecInit(fsms)
   }
@@ -69,44 +66,61 @@ class MultiRankMemoryController(
   }
 
   // ------ Command arbitration from FSMs ------
-  val cmdArb = Module(new RRArbiter(new PhysicalMemoryCommand, totalBankFSMs))
+  val cmdArb = Module(new RRArbiter(new PhysicalMemoryCommand(params), totalBankFSMs))
   for (i <- 0 until totalBankFSMs) {
     cmdArb.io.in(i) <> fsmVec(i).cmdOut
   }
   cmdQueue.io.enq <> cmdArb.io.out
 
   // ------ Response routing back to FSMs ------
-  val respDecoder = Module(new AddressDecoder(params, bankParams))
-  respDecoder.io.addr := io.phyResp.bits.addr
-  val respFlat = respDecoder.io.rankIndex * banksPerRank.U + respDecoder.io.bankIndex
+  // Extract routing information from RequestPacket - this is the authoritative source
+  val phyRespRankId    = io.phyResp.bits.request_id.rank_id
+  val phyRespBankId    = io.phyResp.bits.request_id.bank_id
+  val phyRespChannelId = io.phyResp.bits.request_id.channel_id
+
+  // Calculate target FSM index from RequestPacket info
+  val targetFsm = phyRespRankId * banksPerRank.U + phyRespBankId
+
+  // Validate that this response belongs to our channel
+  val isOurChannel = (phyRespChannelId === localConfig.channelIndex.U)
 
   for (i <- 0 until totalBankFSMs) {
-    val isTgt  = respFlat === i.U
+    val isTgt  = targetFsm === i.U && isOurChannel
     val doFire = io.phyResp.valid && fsmVec(i).phyResp.ready && isTgt
 
     fsmVec(i).phyResp.valid := io.phyResp.valid && isTgt
     fsmVec(i).phyResp.bits  := io.phyResp.bits
 
     when(doFire) {
-      printf(
-        "[Controller] Response routed to FSM %d (rank %d, bank %d) at cycle\n",
-        i.U,
-        (i / banksPerRank).U,
-        (i % banksPerRank).U
-      )
-      printf(
-        "  -> request_id = %d, data = 0x%x, addr = 0x%x\n",
-        io.phyResp.bits.request_id,
-        io.phyResp.bits.data,
-        io.phyResp.bits.addr
-      )
+      if (localConfig.verbose) {
+        printf(
+          "[Controller] Response routed to FSM %d (rank %d, bank %d) at cycle\n",
+          i.U,
+          (i / banksPerRank).U,
+          (i % banksPerRank).U
+        )
+        printf(
+          "  -> ext_req_id = %d, int_req_id = %d, data = 0x%x, addr = 0x%x\n",
+          io.phyResp.bits.request_id.request_id,
+          io.phyResp.bits.request_id.internal_req_id,
+          io.phyResp.bits.data,
+          io.phyResp.bits.addr
+        )
+        printf(
+          "  -> channel_id = %d, rank_id = %d, bank_id = %d\n",
+          io.phyResp.bits.request_id.channel_id,
+          io.phyResp.bits.request_id.rank_id,
+          io.phyResp.bits.request_id.bank_id
+        )
+      }
     }
   }
 
-  io.phyResp.ready := fsmVec(respFlat).phyResp.ready
+  // Only accept responses that belong to our channel
+  io.phyResp.ready := isOurChannel && fsmVec(targetFsm).phyResp.ready
 
   // ------ Collect responses from FSMs ------
-  val respArb = Module(new RRArbiter(new ControllerResponse, totalBankFSMs))
+  val respArb = Module(new RRArbiter(new ControllerResponse(params), totalBankFSMs))
   for (i <- 0 until totalBankFSMs) {
     respArb.io.in(i) <> fsmVec(i).resp
   }
@@ -116,7 +130,7 @@ class MultiRankMemoryController(
 
   // ------ Optional performance tracker ------
   if (trackPerformance) {
-    val tracker = Module(new CommandQueuePerformanceStatistics)
+    val tracker = Module(new CommandQueuePerformanceStatistics(params))
     tracker.io.in_fire  := cmdQueue.io.enq.fire
     tracker.io.in_bits  := cmdQueue.io.enq.bits
     tracker.io.out_fire := io.phyResp.fire

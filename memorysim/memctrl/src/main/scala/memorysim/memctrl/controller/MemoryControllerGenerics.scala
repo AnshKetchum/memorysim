@@ -8,32 +8,24 @@ import chisel3.util._
 //----------------------------------------------------------------------
 
 /** Controller Request interface * */
-class ControllerRequest extends Bundle {
+class ControllerRequest(params: MemoryConfigurationParameters) extends Bundle {
   val rd_en      = Bool()
   val wr_en      = Bool()
-  val addr       = UInt(32.W)
-  val wdata      = UInt(32.W)
-  val request_id = UInt(32.W)
+  val addr       = UInt(params.addressWidth.W)
+  val wdata      = UInt(params.dataWidth.W)
+  val request_id = UInt(params.requestIDBits.W)
 }
 
 /** Controller Response interface * */
-class ControllerResponse extends Bundle {
+class ControllerResponse(params: MemoryConfigurationParameters) extends Bundle {
   val rd_en      = Bool()
   val wr_en      = Bool()
-  val addr       = UInt(32.W)
-  val wdata      = UInt(32.W)
-  val data       = UInt(32.W) // Keep data since responses might need to return data
-  val request_id = UInt(32.W)
-}
-
-/** System Request interface * */
-class SystemRequest extends Bundle {
-  val rd_en = Bool()
-  val wr_en = Bool()
-  val addr  = UInt(32.W)
-  val wdata = UInt(32.W)
+  val addr       = UInt(params.addressWidth.W)
+  val wdata      = UInt(params.dataWidth.W)
+  val data       = UInt(params.dataWidth.W) // Keep data since responses might need to return data
+  val request_id = UInt(params.requestIDBits.W)
 }
 
 case class MemoryControllerParameters(
   queueSize:      Int = 256,
-  openPagePolicy: Boolean = true)
+  openPagePolicy: Boolean = false)

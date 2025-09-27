@@ -17,7 +17,7 @@ class MultiChannelSystem(
   decoder.io.addr := io.in.bits.addr
 
   // Shared request ID counter
-  val requestId = RegInit(0.U(32.W))
+  val requestId = RegInit(1.U(params.memConfiguration.requestIDBits.W))
   val inputFire = io.in.valid && io.in.ready
   when(inputFire) { requestId := requestId + 1.U }
 
@@ -55,7 +55,7 @@ class MultiChannelSystem(
 
   // Build per-channel ControllerRequest wires
   val ctrlReqVec = Seq.tabulate(params.memConfiguration.numberOfChannels) { i =>
-    val w = Wire(Decoupled(new ControllerRequest))
+    val w = Wire(Decoupled(new ControllerRequest(params.memConfiguration)))
     // valid only for the decoded channel
     w.valid           := io.in.valid && (decoder.io.channelIndex === i.U)
     // map SystemRequest fields
@@ -78,7 +78,9 @@ class MultiChannelSystem(
   }
 
   // Arbiter to collect responses
-  val respArb = Module(new Arbiter(new ControllerResponse, params.memConfiguration.numberOfChannels))
+  val respArb = Module(
+    new Arbiter(new ControllerResponse(params.memConfiguration), params.memConfiguration.numberOfChannels)
+  )
   for (i <- 0 until params.memConfiguration.numberOfChannels) {
     respArb.io.in(i) <> controllers(i).io.out
   }
@@ -87,7 +89,7 @@ class MultiChannelSystem(
   // Performance statistics per-channel (optional)
   if (params.trackPerformance) {
     for (i <- 0 until params.memConfiguration.numberOfChannels) {
-      val perfStats = Module(new SystemQueuePerformanceStatistics)
+      val perfStats = Module(new SystemQueuePerformanceStatistics(params.memConfiguration))
       val inFireCh  = io.in.valid && io.in.ready && (decoder.io.channelIndex === i.U)
       val outFire   = io.out.valid && io.out.ready
       perfStats.io.in_fire  := inFireCh

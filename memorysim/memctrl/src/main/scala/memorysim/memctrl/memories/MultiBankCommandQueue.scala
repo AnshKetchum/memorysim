@@ -12,8 +12,8 @@ class MultiBankCmdQueue(
   depth:      Int)
     extends Module {
   val io = IO(new Bundle {
-    val enq    = Flipped(Decoupled(new PhysicalMemoryCommand))
-    val deq    = Vec(numBanks, Decoupled(new PhysicalMemoryCommand))
+    val enq    = Flipped(Decoupled(new PhysicalMemoryCommand(params)))
+    val deq    = Vec(numBanks, Decoupled(new PhysicalMemoryCommand(params)))
     val counts = Output(Vec(numBanks, UInt(log2Ceil(depth + 1).W)))
   })
 
@@ -24,7 +24,7 @@ class MultiBankCmdQueue(
 
   // One queue per bank
   val queues = Seq.fill(numBanks) {
-    Module(new Queue(new PhysicalMemoryCommand, entries = depth))
+    Module(new Queue(new PhysicalMemoryCommand(params), entries = depth))
   }
 
   // Default wiring: hook up dequeues & counts, hold off enq
