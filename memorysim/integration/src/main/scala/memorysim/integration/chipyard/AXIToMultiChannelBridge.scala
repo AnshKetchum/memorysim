@@ -96,7 +96,7 @@ class AXIToMultiChannelBridge(
     }
     is(sWResp) {
       // Count down responses from memory system
-      when(memSys.io.out.fire && memSys.io.out.bits.wr_en) {
+      when(memSys.io.out.fire && memSys.io.out.bits.out.wr_en) {
         write_responses_pending := write_responses_pending - 1.U
       }
 
@@ -177,9 +177,9 @@ class AXIToMultiChannelBridge(
     }
     is(sRCollect) {
       // Collect responses and buffer them
-      when(memSys.io.out.fire && memSys.io.out.bits.rd_en) {
+      when(memSys.io.out.fire && memSys.io.out.bits.out.rd_en) {
         val beat_index = read_responses_received // Assuming in-order for simplicity
-        read_buffer(beat_index)       := memSys.io.out.bits.data
+        read_buffer(beat_index)       := memSys.io.out.bits.out.data
         read_buffer_valid(beat_index) := true.B
         read_responses_received       := read_responses_received + 1.U
       }
@@ -227,11 +227,11 @@ class AXIToMultiChannelBridge(
   when(memSys.io.out.fire) {
     printf(
       "[AXI-Bridge] MemSys resp: wr=%d rd=%d addr=%x data=%x id=%d\n",
-      memSys.io.out.bits.wr_en,
-      memSys.io.out.bits.rd_en,
-      memSys.io.out.bits.addr,
-      memSys.io.out.bits.data,
-      memSys.io.out.bits.request_id
+      memSys.io.out.bits.out.wr_en,
+      memSys.io.out.bits.out.rd_en,
+      memSys.io.out.bits.out.addr,
+      memSys.io.out.bits.out.data,
+      memSys.io.out.bits.out.request_id
     )
   }
 }

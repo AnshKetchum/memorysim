@@ -48,11 +48,13 @@ class SimMemorySimExecutor(
       dataWidth = dataBits,
       numberOfChannels = 1, // WARNING: Default single channel
       numberOfRanks = 2,    // WARNING: Default 2 ranks
-      numberOfBanks = 8     // WARNING: Default 8 banks
+      numberOfBanks = 8,    // WARNING: Default 8 banks
+      memoryQueueSize = 8   // WARNING: Default queue size
     ),
     bankConfiguration = DRAMBankParameters(), // WARNING: Using default HBM2 timing
     controllerConfiguration = MemoryControllerParameters(
-      openPagePolicy = false
+      queueSize = 8,
+      openPagePolicy = true
     ),                                        // WARNING: Default controller params
     trackPerformance = true                   // WARNING: Performance tracking disabled by default
   )
@@ -124,7 +126,7 @@ class SimMemorySimExecutor(
     }
     is(sWWaitResp) {
       // Wait for all memory system responses
-      when(memSys.io.out.fire && memSys.io.out.bits.wr_en) {
+      when(memSys.io.out.fire && memSys.io.out.bits.out.wr_en) {
         write_responses_pending := write_responses_pending - 1.U
 
         when(write_responses_pending === 1.U) {
@@ -227,11 +229,11 @@ class SimMemorySimExecutor(
       read_timeout_counter := read_timeout_counter + 1.U
 
       // Collect responses from memory system
-      when(memSys.io.out.fire && memSys.io.out.bits.rd_en) {
+      when(memSys.io.out.fire && memSys.io.out.bits.out.rd_en) {
         // For simplicity, assume responses come back in order (beat index = read_responses_received)
         // In a real system, you'd match based on request_id or address
         val beat_index = read_responses_received
-        read_buffer(beat_index)       := memSys.io.out.bits.data
+        read_buffer(beat_index)       := memSys.io.out.bits.out.data
         read_buffer_valid(beat_index) := true.B
         read_responses_received       := read_responses_received + 1.U
         read_timeout_counter          := 0.U // Reset timeout on response
