@@ -1,104 +1,47 @@
 #include "VMultiChannelSystem.h"
 #include "verilated.h"
-#include <cstdlib>
-#include <ctime>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <deque>
 #include <unordered_map>
-#include <algorithm>
 #include <cassert>
 using namespace std;
 
 unsigned long long sim_cycle = 0;
 static const unsigned long long TIMEOUT = 100000ULL;
-unsigned long long max_request_cycles = 0; // 0 = unlimited
+unsigned long long max_request_cycles = 100; // Default timeout
 
-// Trace entry for input stimuli
 struct TraceEntry {
     unsigned int addr;
     bool is_write;
     unsigned long long cycle;
     unsigned int wdata;
-    unsigned long long enq_cycle = 0; // track when request was enqueued
+    int line_number;
 };
 
-// Log entry for enqueued requests
-struct EnqueueLogEntry {
+struct PendingRequest {
     unsigned int addr;
     bool is_write;
-    int data; // data for write, -1 for read
+    unsigned int wdata;
+    unsigned long long enq_cycle;
+    int line_number;
+    // For reads: expected data at enqueue time
+    unsigned int expected_rdata;
+    bool has_expected;
 };
 
-// Log entry for dequeued responses
-struct ResponseLogEntry {
-    unsigned int addr;
-    bool is_write;
-    int data; // returned data
-};
-
-vector<EnqueueLogEntry> enqueue_log;
-vector<ResponseLogEntry> response_log;
-
-// Track last written data by address (only updated by explicit writes)
-unordered_map<unsigned, unsigned> last_write_data;
-
-// Pending now supports multiple outstanding requests per address
-unordered_map<unsigned, deque<TraceEntry>> pending;
-
-void write_enqueue_log(const string &filename) {
-    ofstream log_file(filename);
-    if (!log_file) {
-        cerr << "ERROR: Unable to open enqueue log file: " << filename << endl;
-        return;
-    }
-    for (const auto &e : enqueue_log) {
-        log_file << hex << "0x" << e.addr << dec
-                 << (e.is_write ? " WRITE " : " READ  ")
-                 << e.data << endl;
-    }
-}
-
-void write_response_log(const string &filename) {
-    ofstream log_file(filename);
-    if (!log_file) {
-        cerr << "ERROR: Unable to open response log file: " << filename << endl;
-        return;
-    }
-    for (const auto &r : response_log) {
-        log_file << hex << "0x" << r.addr << dec
-                 << (r.is_write ? " WRITE_RESP " : " READ_RESP  ")
-                 << r.data << endl;
-    }
-}
-
-void flush_and_exit(int code = 1) {
-    write_enqueue_log("enqueue_log.txt");
-    write_response_log("response_log.txt");
-    exit(code);
-}
+// Track memory state and pending requests
+unordered_map<unsigned, unsigned> memory_state;
+unordered_map<unsigned int, PendingRequest> pending; // request_id -> request
+unsigned int next_request_id = 1;
 
 void tick(VMultiChannelSystem* top) {
-    top->clock = 0; top->eval();
-    top->clock = 1; top->eval();
+    top->clock = 0; 
+    top->eval();
+    top->clock = 1; 
+    top->eval();
     sim_cycle++;
-
-    // Check for max_request_cycles violation
-    if (max_request_cycles > 0) {
-        for (auto &kv : pending) {
-            for (const auto &req : kv.second) {
-                if ((sim_cycle - req.enq_cycle) > max_request_cycles) {
-                    cerr << "ERROR: Request to addr 0x" << hex << req.addr
-                         << dec << " exceeded max request cycles of " << max_request_cycles
-                         << " (enqueued at cycle " << req.enq_cycle
-                         << ", now " << sim_cycle << ")" << endl;
-                    flush_and_exit(1);
-                }
-            }
-        }
-    }
 }
 
 vector<TraceEntry> load_trace(const string &filename) {
@@ -106,211 +49,231 @@ vector<TraceEntry> load_trace(const string &filename) {
     ifstream infile(filename);
     if (!infile) {
         cerr << "Failed to open trace file: " << filename << endl;
-        write_enqueue_log("enqueue_log.txt");
         exit(1);
     }
+    
     string line;
-
-    auto strip = [](string s) -> string {
-        size_t a = s.find_first_not_of(" \t\r\n");
-        size_t b = s.find_last_not_of(" \t\r\n");
-        if (a == string::npos) return "";
-        s = s.substr(a, b - a + 1);
-        while (!s.empty() && (s.back() == ',' || s.back() == ';')) s.pop_back();
-        return s;
-    };
-
+    int line_number = 0;
     while (getline(infile, line)) {
+        line_number++;
         if (line.empty()) continue;
-
+        
         istringstream iss(line);
         string addr_str, op;
         if (!(iss >> addr_str >> op)) continue;
-
-        vector<string> rest;
+        
+        vector<string> tokens;
         string tok;
-        while (iss >> tok) rest.push_back(tok);
-
-        if (rest.empty()) {
-            cerr << "WARNING: Malformed trace line (no cycle): " << line << endl;
-            continue;
-        }
-
-        string cycle_str = strip(rest.back());
-        unsigned long long cycle = 0;
-        try { cycle = stoull(cycle_str, nullptr, 0); }
-        catch (...) { cerr << "WARNING: Couldn't parse cycle '" << cycle_str << "' in line: " << line << endl; continue; }
-
+        while (iss >> tok) tokens.push_back(tok);
+        if (tokens.empty()) continue;
+        
         TraceEntry e;
-        string a = strip(addr_str);
-        try { e.addr = static_cast<unsigned int>(stoul(a, nullptr, 0)); }
-        catch (...) { cerr << "WARNING: Couldn't parse address '" << a << "' in line: " << line << endl; continue; }
-
+        e.addr = stoul(addr_str, nullptr, 0);
         e.is_write = (op == "WRITE");
-        e.cycle = cycle;
+        e.cycle = stoull(tokens.back(), nullptr, 0);
+        e.line_number = line_number;
         e.wdata = 0;
-
-        if (e.is_write) {
-            if (rest.size() >= 2) {
-                string data_str = strip(rest[rest.size() - 2]);
-                try { e.wdata = static_cast<unsigned int>(stoul(data_str, nullptr, 0)); }
-                catch (...) { e.wdata = static_cast<unsigned int>(rand()); }
-            } else { e.wdata = static_cast<unsigned int>(rand()); }
+        
+        if (e.is_write && tokens.size() >= 2) {
+            e.wdata = stoul(tokens[tokens.size() - 2], nullptr, 0);
         }
-
+        
         trace.push_back(e);
     }
     return trace;
 }
 
-bool enqueue_request(VMultiChannelSystem* top, TraceEntry &e) {
-    top->io_in_valid      = 1;
-    top->io_in_bits_addr  = e.addr;
-    top->io_in_bits_wr_en = e.is_write;
-    top->io_in_bits_rd_en = !e.is_write;
-    top->io_in_bits_wdata = e.wdata;
+// Track current enqueue attempt
+static bool enq_pending = false;
+static TraceEntry current_enq_entry;
 
-    unsigned long long wait = 0;
-    while (!top->io_in_ready && wait++ < TIMEOUT) tick(top);
-
-    if (!top->io_in_ready) {
-        cerr << "ERROR: Timeout enqueuing " << (e.is_write ? "WRITE" : "READ")
-             << " at cycle " << sim_cycle << " addr=0x" << hex << e.addr << dec << endl;
-        top->io_in_valid = 0;
-        return false;
-    }
-
-    // Log enqueue
-    enqueue_log.push_back({e.addr, e.is_write, e.is_write ? static_cast<int>(e.wdata) : -1});
-
-    // Record pending for response check
-    e.enq_cycle = sim_cycle; // store when this request was enqueued
-    pending[e.addr].push_back(e);
-
-    if (e.is_write) last_write_data[e.addr] = e.wdata;
-
-    tick(top);
-    top->io_in_valid = 0;
-    return true;
+bool try_start_enqueue(VMultiChannelSystem* top, const TraceEntry& entry) {
+    if (enq_pending) return false; // Already trying to enqueue something
+    
+    // Start handshake
+    top->io_in_valid = 1;
+    top->io_in_bits_addr = entry.addr;
+    top->io_in_bits_wr_en = entry.is_write;
+    top->io_in_bits_rd_en = !entry.is_write;
+    top->io_in_bits_wdata = entry.wdata;
+    
+    enq_pending = true;
+    current_enq_entry = entry;
+    return false; // Not complete yet
 }
 
-bool dequeue_response(VMultiChannelSystem* top) {
-    if (!top->io_out_valid) return false;
-
-    unsigned int addr = top->io_out_bits_addr;
-    unsigned int data = top->io_out_bits_data;
-
-    bool has_pending = (pending.count(addr) && !pending[addr].empty());
-    bool is_write_resp = false;
-    TraceEntry pending_entry;
-    if (has_pending) {
-        pending_entry = pending[addr].front();
-        is_write_resp = pending_entry.is_write;
-    } else {
-        cerr << "WARNING: Received response for unknown addr 0x" << hex << addr << dec
-             << " at cycle " << sim_cycle << ". Treating as unsolicited/random response." << endl;
-    }
-
-    cout << "[RESP] cycle " << sim_cycle << " "
-         << (is_write_resp ? "WRITE_RESP" : "READ_RESP")
-         << " addr=0x" << hex << addr << dec
-         << " data=0x" << hex << data << dec << endl;
-
-    response_log.push_back({addr, is_write_resp, static_cast<int>(data)});
-
-    if (has_pending) {
-        if (is_write_resp) {
-            if (data != pending_entry.wdata) {
-                cerr << "ERROR: Write mismatch at addr 0x" << hex << addr
-                     << ". Sent=0x" << pending_entry.wdata
-                     << ", Got=0x" << data << dec << endl;
-                flush_and_exit(1);
-            } else {
-                cout << "[OK] Write confirmed for addr 0x" << hex << addr
-                     << " value=0x" << data << dec << endl;
-            }
+bool check_enqueue_complete(VMultiChannelSystem* top) {
+    if (!enq_pending) return false;
+    
+    // Use the fire attribute if available, otherwise compute manually
+    bool fire;
+    #ifdef USE_FIRE_ATTRIBUTE
+    fire = top->io_in_fire;  // If your module exposes this
+    #else
+    fire = top->io_in_valid && top->io_in_ready;
+    #endif
+    
+    if (fire) {
+        // Handshake complete - record the enqueue
+        PendingRequest req;
+        req.addr = current_enq_entry.addr;
+        req.is_write = current_enq_entry.is_write;
+        req.wdata = current_enq_entry.wdata;
+        req.enq_cycle = sim_cycle;
+        req.line_number = current_enq_entry.line_number;
+        
+        // For reads, capture expected value NOW
+        if (!current_enq_entry.is_write) {
+            req.has_expected = memory_state.count(current_enq_entry.addr) > 0;
+            req.expected_rdata = req.has_expected ? memory_state[current_enq_entry.addr] : 0;
         } else {
-            if (last_write_data.count(addr)) {
-                unsigned expected = last_write_data[addr];
-                if (data != expected) {
-                    cerr << "ERROR: Read mismatch at addr 0x" << hex << addr
-                         << ". Expected=0x" << expected
-                         << ", Got=0x" << data << dec << endl;
-                    flush_and_exit(1);
-                } else {
-                    cout << "[OK] Read matched last write for addr 0x" << hex << addr
-                         << " value=0x" << data << dec << endl;
-                }
-            } else {
-                cout << "[INFO] Read to addr 0x" << hex << addr << dec
-                     << " had no prior write; treating returned value 0x" << hex << data
-                     << dec << " as random." << endl;
-            }
+            req.has_expected = false;
         }
-        pending[addr].pop_front();
-        if (pending[addr].empty()) pending.erase(addr);
+        
+        unsigned int req_id = next_request_id++;
+        pending[req_id] = req;
+        
+        // Update memory state for writes
+        if (current_enq_entry.is_write) {
+            memory_state[current_enq_entry.addr] = current_enq_entry.wdata;
+        }
+        
+        cout << "[ENQ] cycle " << sim_cycle 
+             << (current_enq_entry.is_write ? " WRITE " : " READ  ")
+             << "addr=0x" << hex << current_enq_entry.addr << dec
+             << " req_id=" << req_id;
+        if (current_enq_entry.is_write) {
+            cout << " data=0x" << hex << current_enq_entry.wdata << dec;
+        }
+        cout << " [line " << current_enq_entry.line_number << "]" << endl;
+        
+        enq_pending = false;
+        top->io_in_valid = 0;
+        return true;
     }
+    
+    return false; // Still waiting for ready
+}
 
-    tick(top);
+bool try_dequeue(VMultiChannelSystem* top) {
+    // Check if response available this cycle
+    if (!top->io_out_valid) {
+        return false;
+    }
+    
+    // Accept it immediately
+    top->io_out_ready = 1;
+    
+    // Read response data
+    unsigned int addr = top->io_out_bits_out_addr;
+    unsigned int data = top->io_out_bits_out_data;
+    unsigned int req_id = top->io_out_bits_out_request_id;
+    bool is_write = top->io_out_bits_out_wr_en;
+    
+    cout << "[RESP] cycle " << sim_cycle 
+         << (is_write ? " WRITE_RESP " : " READ_RESP  ")
+         << "addr=0x" << hex << addr << dec
+         << " data=0x" << hex << data << dec
+         << " req_id=" << req_id;
+    
+    // Validate against pending request
+    if (pending.count(req_id) == 0) {
+        cout << " ERROR: Unknown request ID!" << endl;
+        exit(1);
+    }
+    
+    PendingRequest& req = pending[req_id];
+    cout << " [line " << req.line_number << "]";
+    
+    // Validate response
+    if (req.addr != addr || req.is_write != is_write) {
+        cout << " ERROR: Response mismatch!" << endl;
+        exit(1);
+    }
+    
+    if (is_write) {
+        if (data != req.wdata) {
+            cout << " ERROR: Write data mismatch!" << endl;
+            exit(1);
+        }
+        cout << " OK" << endl;
+    } else {
+        if (req.has_expected && data != req.expected_rdata) {
+            cout << " ERROR: Read data mismatch! Expected=0x" << hex << req.expected_rdata << endl;
+            exit(1);
+        }
+        cout << (req.has_expected ? " OK" : " (uninit)") << endl;
+    }
+    
+    // Check timeout
+    if (max_request_cycles > 0 && (sim_cycle - req.enq_cycle) > max_request_cycles) {
+        cout << "ERROR: Request timeout! Took " << (sim_cycle - req.enq_cycle) << " cycles" << endl;
+        exit(1);
+    }
+    
+    pending.erase(req_id);
     return true;
 }
 
 int main(int argc, char **argv) {
-    Verilated::commandArgs(argc, argv);
     string trace_file = "test.trace";
     unsigned long long max_cycles = 100000ULL;
-
+    
     for (int i = 1; i < argc; ++i) {
         string arg = argv[i];
         if (arg == "-t" && i+1 < argc) trace_file = argv[++i];
         else if (arg == "-c" && i+1 < argc) max_cycles = stoull(argv[++i]);
         else if (arg == "-m" && i+1 < argc) max_request_cycles = stoull(argv[++i]);
-        else {
-            cerr << "Usage: " << argv[0] << " [-t <trace>] [-c <max_cycles>] [-m <max_request_cycles>]" << endl;
-            write_enqueue_log("enqueue_log.txt");
-            write_response_log("response_log.txt");
-            return 1;
-        }
     }
-
+    
     VMultiChannelSystem *top = new VMultiChannelSystem;
-    srand(static_cast<unsigned>(time(nullptr)));
-
+    
+    // Reset
     top->reset = 1;
     for (int i = 0; i < 5; ++i) tick(top);
     top->reset = 0;
-    tick(top);
-
-    top->io_out_ready = 1;
-
+    top->io_out_ready = 0; // Start with ready=0
+    
     auto trace = load_trace(trace_file);
-    size_t idx = 0;
-
-    while ((idx < trace.size() || !pending.empty()) && sim_cycle < max_cycles) {
-        if (idx < trace.size() && sim_cycle >= trace[idx].cycle) {
-            if (!enqueue_request(top, trace[idx])) {
-                cerr << "ERROR: Failed to enqueue request from trace at index " << idx << endl;
-                flush_and_exit(1);
-            }
-            idx++;
-            continue;
+    size_t trace_idx = 0;
+    
+    cout << "Starting simulation with " << trace.size() << " requests..." << endl;
+    
+    while ((trace_idx < trace.size() || !pending.empty() || enq_pending) && sim_cycle < max_cycles) {
+        // Check if previous enqueue completed
+        bool enq_completed = check_enqueue_complete(top);
+        if (enq_completed) {
+            trace_idx++; // Move to next trace entry only after successful enqueue
         }
-        if (!dequeue_response(top)) tick(top);
+        
+        // Try to dequeue 
+        try_dequeue(top);
+        
+        // Try to start new enqueue if we have pending trace entries for this cycle and no enqueue in progress
+        if (trace_idx < trace.size() && sim_cycle >= trace[trace_idx].cycle && !enq_pending) {
+            try_start_enqueue(top, trace[trace_idx]);
+        }
+        
+        // Always tick to advance time
+        tick(top);
+        
+        // Reset ready after tick
+        top->io_out_ready = 0;
     }
-
+    
     if (sim_cycle >= max_cycles) {
-        cerr << "ERROR: Max cycles (" << max_cycles << ") reached." << endl;
-        write_enqueue_log("enqueue_log.txt");
-        write_response_log("response_log.txt");
+        cerr << "ERROR: Max cycles reached" << endl;
         return 1;
-    } else {
-        cout << "Simulation completed in " << sim_cycle << " cycles." << endl;
     }
-
-    write_enqueue_log("enqueue_log.txt");
-    write_response_log("response_log.txt");
-
-    top->final();
+    
+    if (!pending.empty()) {
+        cerr << "ERROR: " << pending.size() << " requests still pending" << endl;
+        return 1;
+    }
+    
+    cout << "SUCCESS: All requests completed in " << sim_cycle << " cycles" << endl;
+    cout << "Processed " << (next_request_id - 1) << " requests" << endl;
+    
     delete top;
     return 0;
 }

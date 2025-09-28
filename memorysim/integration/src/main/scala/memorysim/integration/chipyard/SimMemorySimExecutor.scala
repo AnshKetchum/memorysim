@@ -48,13 +48,11 @@ class SimMemorySimExecutor(
       dataWidth = dataBits,
       numberOfChannels = 1, // WARNING: Default single channel
       numberOfRanks = 2,    // WARNING: Default 2 ranks
-      numberOfBanks = 8,    // WARNING: Default 8 banks
-      memoryQueueSize = 1   // WARNING: Default queue size
+      numberOfBanks = 8     // WARNING: Default 8 banks
     ),
     bankConfiguration = DRAMBankParameters(), // WARNING: Using default HBM2 timing
     controllerConfiguration = MemoryControllerParameters(
-      queueSize = 1,
-      openPagePolicy = true
+      openPagePolicy = false
     ),                                        // WARNING: Default controller params
     trackPerformance = true                   // WARNING: Performance tracking disabled by default
   )

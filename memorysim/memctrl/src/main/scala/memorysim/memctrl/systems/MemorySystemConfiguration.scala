@@ -4,17 +4,23 @@ import chisel3._
 import chisel3.util._
 
 /** System Request interface * */
-class SystemRequest(val dataWidth: Int, val addrWidth: Int) extends Bundle {
+class SystemRequest(params: MemoryConfigurationParameters) extends Bundle {
   val rd_en = Bool()
   val wr_en = Bool()
-  val addr  = UInt(addrWidth.W)
-  val wdata = UInt(dataWidth.W)
+  val addr  = UInt(params.addressWidth.W)
+  val wdata = UInt(params.dataWidth.W)
+}
+
+/** System Request interface * */
+class SystemResponse(params: MemoryConfigurationParameters) extends Bundle {
+  val out = new ControllerResponse(params)
+  val next_available_request_id = UInt(params.requestIDBits.W)
 }
 
 /** Updated top-level memory system I/O using the new names. */
 class MemorySystemIO(params: MemoryConfigurationParameters) extends Bundle {
-  val in  = Flipped(Decoupled(new SystemRequest(params.dataWidth, params.addressWidth)))
-  val out = Decoupled(new ControllerResponse(params))
+  val in  = Flipped(Decoupled(new SystemRequest(params)))
+  val out = Decoupled(new SystemResponse(params))
 
   // Internals-Monitoring Signals
   val rankState         = Output(Vec(params.numberOfRanks, UInt(3.W)))

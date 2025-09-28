@@ -60,7 +60,7 @@ class SingleChannelMemorySystemSpec extends AnyFreeSpec with Matchers {
       }
       assert(cycles < 2000, "Timeout reached during read transaction")
       dut.io.out.valid.expect(true.B)
-      dut.io.out.bits.data.expect("hCAFEBABE".U)
+      dut.io.out.bits.out.data.expect("hCAFEBABE".U)
     }
   }
 }

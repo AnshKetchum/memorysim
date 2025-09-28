@@ -70,18 +70,18 @@ module AddressDecoder(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/u
 endmodule
 
 // VCS coverage exclude_file
-module ram_256x452(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-  input  [7:0]   R0_addr,
+module ram_8x452(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  input  [2:0]   R0_addr,
   input          R0_en,
                  R0_clk,
   output [451:0] R0_data,
-  input  [7:0]   W0_addr,
+  input  [2:0]   W0_addr,
   input          W0_en,
                  W0_clk,
   input  [451:0] W0_data
 );
 
-  reg [451:0] Memory[0:255];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  reg [451:0] Memory[0:7];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
   always @(posedge W0_clk) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     if (W0_en & 1'h1)	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       Memory[W0_addr] <= W0_data;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
@@ -91,11 +91,11 @@ module ram_256x452(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     initial begin	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `INIT_RANDOM_PROLOG_	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `ifdef RANDOMIZE_MEM_INIT	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-        for (logic [8:0] i = 9'h0; i < 9'h100; i += 9'h1) begin
+        for (logic [3:0] i = 4'h0; i < 4'h8; i += 4'h1) begin
           for (logic [8:0] j = 9'h0; j < 9'h1E0; j += 9'h20) begin
             _RANDOM_MEM[j +: 32] = `RANDOM;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
           end	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-          Memory[i[7:0]] = _RANDOM_MEM[451:0];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+          Memory[i[2:0]] = _RANDOM_MEM[451:0];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
         end	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `endif // RANDOMIZE_MEM_INIT
     end // initial
@@ -103,7 +103,7 @@ module ram_256x452(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
   assign R0_data = R0_en ? Memory[R0_addr] : 452'bx;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
 endmodule
 
-module Queue256_PhysicalMemoryCommand(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
+module Queue8_PhysicalMemoryCommand(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   input         clock,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
                 reset,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   output        io_enq_ready,	// @[src/main/scala/chisel3/util/Decoupled.scala:255:14]
@@ -137,8 +137,8 @@ module Queue256_PhysicalMemoryCommand(	// @[src/main/scala/chisel3/util/Decouple
 );
 
   wire [451:0] _ram_ext_R0_data;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-  reg  [7:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-  reg  [7:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
   reg          maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27]
   wire         ptr_match = enq_ptr_value == deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:260:33]
   wire         empty = ptr_match & ~maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27, :260:33, :261:{25,28}]
@@ -147,15 +147,15 @@ module Queue256_PhysicalMemoryCommand(	// @[src/main/scala/chisel3/util/Decouple
   wire         do_deq = io_deq_ready & ~empty;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :261:25, :285:19]
   always @(posedge clock) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     if (reset) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-      enq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-      deq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      enq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      deq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
       maybe_full <= 1'h0;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
     end
     else begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       if (do_enq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        enq_ptr_value <= enq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        enq_ptr_value <= enq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (do_deq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        deq_ptr_value <= deq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        deq_ptr_value <= deq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (~(do_enq == do_deq))	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27, :276:{15,27}, :277:16]
         maybe_full <= do_enq;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27]
     end
@@ -171,16 +171,16 @@ module Queue256_PhysicalMemoryCommand(	// @[src/main/scala/chisel3/util/Decouple
       `endif // INIT_RANDOM_PROLOG_
       `ifdef RANDOMIZE_REG_INIT	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
         _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][7:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][15:8];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        maybe_full = _RANDOM[/*Zero width*/ 1'b0][16];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
+        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][2:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][5:3];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        maybe_full = _RANDOM[/*Zero width*/ 1'b0][6];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       `FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  ram_256x452 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  ram_8x452 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     .R0_addr (deq_ptr_value),	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
     .R0_en   (1'h1),	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     .R0_clk  (clock),
@@ -275,7 +275,7 @@ module MultiRankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  Queue256_PhysicalMemoryCommand queues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiRankCommandQueue.scala:26:11]
+  Queue8_PhysicalMemoryCommand queues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiRankCommandQueue.scala:26:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_0_io_enq_ready),
@@ -310,7 +310,7 @@ module MultiRankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_0_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiRankCommandQueue.scala:26:11]
+  Queue8_PhysicalMemoryCommand queues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiRankCommandQueue.scala:26:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_1_io_enq_ready),
@@ -504,7 +504,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  Queue256_PhysicalMemoryCommand queues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_0_io_enq_ready),
@@ -539,7 +539,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_0_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_1_io_enq_ready),
@@ -574,7 +574,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_1_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_2_io_enq_ready),
@@ -609,7 +609,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_2_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_3 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_3_io_enq_ready),
@@ -644,7 +644,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_3_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_4 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_4_io_enq_ready),
@@ -679,7 +679,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_4_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_5 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_5_io_enq_ready),
@@ -714,7 +714,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_5_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_6 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_6_io_enq_ready),
@@ -749,7 +749,7 @@ module MultiBankCmdQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctr
     .io_deq_bits_request_id_scheduler_identifier
       (io_deq_6_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryCommand queues_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
+  Queue8_PhysicalMemoryCommand queues_7 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/MultiBankCommandQueue.scala:27:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_queues_7_io_enq_ready),
@@ -1213,18 +1213,18 @@ module SingleCycleTimingEngine(	// @[memorysim/memctrl/src/main/scala/memorysim/
 endmodule
 
 // VCS coverage exclude_file
-module ram_256x448(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-  input  [7:0]   R0_addr,
+module ram_8x448(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  input  [2:0]   R0_addr,
   input          R0_en,
                  R0_clk,
   output [447:0] R0_data,
-  input  [7:0]   W0_addr,
+  input  [2:0]   W0_addr,
   input          W0_en,
                  W0_clk,
   input  [447:0] W0_data
 );
 
-  reg [447:0] Memory[0:255];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  reg [447:0] Memory[0:7];	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
   always @(posedge W0_clk) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     if (W0_en & 1'h1)	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       Memory[W0_addr] <= W0_data;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
@@ -1234,11 +1234,11 @@ module ram_256x448(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     initial begin	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `INIT_RANDOM_PROLOG_	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `ifdef RANDOMIZE_MEM_INIT	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-        for (logic [8:0] i = 9'h0; i < 9'h100; i += 9'h1) begin
+        for (logic [3:0] i = 4'h0; i < 4'h8; i += 4'h1) begin
           for (logic [8:0] j = 9'h0; j < 9'h1C0; j += 9'h20) begin
             _RANDOM_MEM[j +: 32] = `RANDOM;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
           end	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-          Memory[i[7:0]] = _RANDOM_MEM;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+          Memory[i[2:0]] = _RANDOM_MEM;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
         end	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
       `endif // RANDOMIZE_MEM_INIT
     end // initial
@@ -1246,7 +1246,7 @@ module ram_256x448(	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
   assign R0_data = R0_en ? Memory[R0_addr] : 448'bx;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
 endmodule
 
-module Queue256_BankMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
+module Queue8_BankMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   input         clock,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
                 reset,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   output        io_enq_ready,	// @[src/main/scala/chisel3/util/Decoupled.scala:255:14]
@@ -1272,8 +1272,8 @@ module Queue256_BankMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.s
 );
 
   wire [447:0] _ram_ext_R0_data;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-  reg  [7:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-  reg  [7:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
   reg          maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27]
   wire         ptr_match = enq_ptr_value == deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:260:33]
   wire         empty = ptr_match & ~maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27, :260:33, :261:{25,28}]
@@ -1282,15 +1282,15 @@ module Queue256_BankMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.s
   wire         do_deq = io_deq_ready & ~empty;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :261:25, :285:19]
   always @(posedge clock) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     if (reset) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-      enq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-      deq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      enq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      deq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
       maybe_full <= 1'h0;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
     end
     else begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       if (do_enq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        enq_ptr_value <= enq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        enq_ptr_value <= enq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (do_deq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        deq_ptr_value <= deq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        deq_ptr_value <= deq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (~(do_enq == do_deq))	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27, :276:{15,27}, :277:16]
         maybe_full <= do_enq;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27]
     end
@@ -1306,16 +1306,16 @@ module Queue256_BankMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.s
       `endif // INIT_RANDOM_PROLOG_
       `ifdef RANDOMIZE_REG_INIT	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
         _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][7:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][15:8];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        maybe_full = _RANDOM[/*Zero width*/ 1'b0][16];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
+        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][2:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][5:3];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        maybe_full = _RANDOM[/*Zero width*/ 1'b0][6];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       `FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  ram_256x448 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  ram_8x448 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     .R0_addr (deq_ptr_value),	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
     .R0_en   (1'h1),	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     .R0_clk  (clock),
@@ -4652,7 +4652,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_0_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_0_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_0_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_0_2_io_enq_ready),
@@ -4745,7 +4745,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_1_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_1_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_1_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_1_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_1_2_io_enq_ready),
@@ -4838,7 +4838,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_2_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_2_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_2_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_2_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_2_2_io_enq_ready),
@@ -4931,7 +4931,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_3_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_3_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_3_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_3_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_3_2_io_enq_ready),
@@ -5024,7 +5024,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_4_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_4_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_4_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_4_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_4_2_io_enq_ready),
@@ -5117,7 +5117,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_5_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_5_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_5_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_5_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_5_2_io_enq_ready),
@@ -5210,7 +5210,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_6_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_6_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_6_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_6_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_6_2_io_enq_ready),
@@ -5303,7 +5303,7 @@ module Rank(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Ra
     .io_cmd_bits_we  (_cmdDemux_io_deq_7_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_7_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_7_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_7_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_7_2_io_enq_ready),
@@ -8734,7 +8734,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_0_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_0_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_0_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_0_2_io_enq_ready),
@@ -8827,7 +8827,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_1_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_1_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_1_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_1_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_1_2_io_enq_ready),
@@ -8920,7 +8920,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_2_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_2_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_2_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_2_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_2_2_io_enq_ready),
@@ -9013,7 +9013,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_3_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_3_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_3_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_3_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_3_2_io_enq_ready),
@@ -9106,7 +9106,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_4_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_4_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_4_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_4_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_4_2_io_enq_ready),
@@ -9199,7 +9199,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_5_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_5_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_5_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_5_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_5_2_io_enq_ready),
@@ -9292,7 +9292,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_6_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_6_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_6_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_6_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_6_2_io_enq_ready),
@@ -9385,7 +9385,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
     .io_cmd_bits_we  (_cmdDemux_io_deq_7_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:19:24]
     .io_waitCycles   (_timer_7_io_waitCycles)
   );
-  Queue256_BankMemoryResponse banksWithTiming_7_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
+  Queue8_BankMemoryResponse banksWithTiming_7_2 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Rank.scala:97:23]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_banksWithTiming_7_2_io_enq_ready),
@@ -9568,7 +9568,7 @@ module Rank_1(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/
   );
 endmodule
 
-module Queue256_PhysicalMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
+module Queue8_PhysicalMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   input         clock,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
                 reset,	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
   output        io_enq_ready,	// @[src/main/scala/chisel3/util/Decoupled.scala:255:14]
@@ -9594,8 +9594,8 @@ module Queue256_PhysicalMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupl
 );
 
   wire [447:0] _ram_ext_R0_data;	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
-  reg  [7:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-  reg  [7:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   enq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+  reg  [2:0]   deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
   reg          maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27]
   wire         ptr_match = enq_ptr_value == deq_ptr_value;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:260:33]
   wire         empty = ptr_match & ~maybe_full;	// @[src/main/scala/chisel3/util/Decoupled.scala:259:27, :260:33, :261:{25,28}]
@@ -9604,15 +9604,15 @@ module Queue256_PhysicalMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupl
   wire         do_deq = io_deq_ready & ~empty;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :261:25, :285:19]
   always @(posedge clock) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     if (reset) begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-      enq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
-      deq_ptr_value <= 8'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      enq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
+      deq_ptr_value <= 3'h0;	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
       maybe_full <= 1'h0;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
     end
     else begin	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       if (do_enq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        enq_ptr_value <= enq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        enq_ptr_value <= enq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (do_deq)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-        deq_ptr_value <= deq_ptr_value + 8'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
+        deq_ptr_value <= deq_ptr_value + 3'h1;	// @[src/main/scala/chisel3/util/Counter.scala:61:40, :77:24]
       if (~(do_enq == do_deq))	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27, :276:{15,27}, :277:16]
         maybe_full <= do_enq;	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35, :259:27]
     end
@@ -9628,16 +9628,16 @@ module Queue256_PhysicalMemoryResponse(	// @[src/main/scala/chisel3/util/Decoupl
       `endif // INIT_RANDOM_PROLOG_
       `ifdef RANDOMIZE_REG_INIT	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
         _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][7:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][15:8];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
-        maybe_full = _RANDOM[/*Zero width*/ 1'b0][16];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
+        enq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][2:0];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        deq_ptr_value = _RANDOM[/*Zero width*/ 1'b0][5:3];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7]
+        maybe_full = _RANDOM[/*Zero width*/ 1'b0][6];	// @[src/main/scala/chisel3/util/Counter.scala:61:40, src/main/scala/chisel3/util/Decoupled.scala:243:7, :259:27]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
       `FIRRTL_AFTER_INITIAL	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  ram_256x448 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
+  ram_8x448 ram_ext (	// @[src/main/scala/chisel3/util/Decoupled.scala:256:91]
     .R0_addr (deq_ptr_value),	// @[src/main/scala/chisel3/util/Counter.scala:61:40]
     .R0_en   (1'h1),	// @[src/main/scala/chisel3/util/Decoupled.scala:243:7]
     .R0_clk  (clock),
@@ -9994,7 +9994,7 @@ module Channel(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories
     .io_phyResp_bits_request_id_scheduler_identifier
       (_ranks_1_io_phyResp_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryResponse respQueues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Channel.scala:32:11]
+  Queue8_PhysicalMemoryResponse respQueues_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Channel.scala:32:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_respQueues_0_io_enq_ready),
@@ -10030,7 +10030,7 @@ module Channel(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories
     .io_deq_bits_request_id_scheduler_identifier
       (_respQueues_0_io_deq_bits_request_id_scheduler_identifier)
   );
-  Queue256_PhysicalMemoryResponse respQueues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Channel.scala:32:11]
+  Queue8_PhysicalMemoryResponse respQueues_1 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/memories/Channel.scala:32:11]
     .clock                                       (clock),
     .reset                                       (reset),
     .io_enq_ready                                (_respQueues_1_io_enq_ready),
@@ -10706,71 +10706,71 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
     & ~(|io_phyResp_bits_request_id_bank_id)
-    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_2 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_2 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_2 & _io_cmdOut_valid_T_1 & _GEN_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_2 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_2 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_3 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_3 ? reqAddrReg : 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_3 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_3 ? reqAddrReg : 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_3 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_3 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_4 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
     & ~(|io_phyResp_bits_request_id_bank_id)
-    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_5 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_5 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_6 = ~_GEN_1 & _GEN_5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_4 & _GEN_5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_4 & _GEN_5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   assign io_phyResp_ready_0 =
     sentCmd
     & (state == 2'h1 & _io_phyResp_ready_T_14
@@ -10787,53 +10787,53 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
        & ~(|io_phyResp_bits_request_id_channel_id)
        & ~(|io_phyResp_bits_request_id_rank_id) & ~(|io_phyResp_bits_request_id_bank_id)
        & ~(|io_phyResp_bits_request_id_scheduler_identifier)) & ~_respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_7 = _GEN_1 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_8 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_9 = ~(|state) & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_7 = _GEN_1 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_8 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_9 = ~(|state) & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :186:21]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32, :186:21]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :191:27]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29, :191:27]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_2 | ~(_io_cmdOut_valid_T_1 & _GEN_7)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_2 | ~(_io_cmdOut_valid_T_1 & _GEN_7)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_9) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_9) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_1)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_8)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -10849,15 +10849,15 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -10871,25 +10871,25 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -10898,7 +10898,7 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -10914,25 +10914,25 @@ module ClosedPageBankScheduler(	// @[memorysim/memctrl/src/main/scala/memorysim/
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -11128,71 +11128,71 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :115:29]
@@ -11212,53 +11212,53 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h1
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h1)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -11274,15 +11274,15 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -11296,25 +11296,25 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_1 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_1 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -11323,7 +11323,7 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -11339,25 +11339,25 @@ module ClosedPageBankScheduler_1(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -11553,71 +11553,71 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -11637,53 +11637,53 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h2
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h2)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -11699,15 +11699,15 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -11721,25 +11721,25 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_2 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_2 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -11748,7 +11748,7 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -11764,25 +11764,25 @@ module ClosedPageBankScheduler_2(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -11978,71 +11978,71 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -12062,53 +12062,53 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h3
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h3)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12124,15 +12124,15 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12146,25 +12146,25 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_3 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_3 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -12173,7 +12173,7 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -12189,25 +12189,25 @@ module ClosedPageBankScheduler_3(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -12403,71 +12403,71 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -12487,53 +12487,53 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h4
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h4)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12549,15 +12549,15 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12571,25 +12571,25 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_4 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_4 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -12598,7 +12598,7 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -12614,25 +12614,25 @@ module ClosedPageBankScheduler_4(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -12828,71 +12828,71 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -12912,53 +12912,53 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h5
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h5)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12974,15 +12974,15 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -12996,25 +12996,25 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_5 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_5 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -13023,7 +13023,7 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -13039,25 +13039,25 @@ module ClosedPageBankScheduler_5(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -13253,71 +13253,71 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -13337,53 +13337,53 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h6
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h6)
-    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & _respDec_io_bankIndex == 3'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -13399,15 +13399,15 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -13421,25 +13421,25 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_6 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_6 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -13448,7 +13448,7 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -13464,25 +13464,25 @@ module ClosedPageBankScheduler_6(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -13678,71 +13678,71 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_bank_id == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_scheduler_identifier == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_3 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_4 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_4 & _io_cmdOut_valid_T_1 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_4 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_5 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_5 ? reqAddrReg : 32'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_5 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_5 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_6 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & ~(|io_phyResp_bits_request_id_rank_id)
-    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & _GEN_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_7 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_8 = ~_GEN_3 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_6 & _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
     io_phyResp_bits_request_id_scheduler_identifier == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
@@ -13762,53 +13762,53 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
        & ~(|io_phyResp_bits_request_id_rank_id)
        & io_phyResp_bits_request_id_bank_id == 64'h7
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h7)
-    & ~_respDec_io_rankIndex & (&_respDec_io_bankIndex);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:{25,61}, :222:25]
-  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & ~_respDec_io_rankIndex & (&_respDec_io_bankIndex);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:{27,63}, :227:27]
+  wire        _GEN_9 = _GEN_3 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_10 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_11 = ~(|state) & _GEN_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_4 | ~(_io_cmdOut_valid_T_1 & _GEN_9)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_11) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_3)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_9)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_6)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_10)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_11)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -13824,15 +13824,15 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -13846,25 +13846,25 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_7 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_7 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -13873,7 +13873,7 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -13889,25 +13889,25 @@ module ClosedPageBankScheduler_7(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -14103,72 +14103,72 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
     & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1
     & ~(|io_phyResp_bits_request_id_bank_id)
-    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_3 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_3 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_3 & _io_cmdOut_valid_T_1 & _GEN_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_3 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_3 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_4 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_4 ? reqAddrReg : 32'h8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_4 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_4 ? reqAddrReg : 32'h8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_4 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_4 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_5 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
     & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1
     & ~(|io_phyResp_bits_request_id_bank_id)
-    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_scheduler_identifier);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_6 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_6 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_7 = ~_GEN_2 & _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_5 & _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_5 & _GEN_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   assign io_phyResp_ready_0 =
     sentCmd
@@ -14187,53 +14187,53 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & ~(|io_phyResp_bits_request_id_bank_id)
        & ~(|io_phyResp_bits_request_id_scheduler_identifier)) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_8 = _GEN_2 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_9 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_10 = ~(|state) & _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_8 = _GEN_2 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_9 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_10 = ~(|state) & _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_3 | ~(_io_cmdOut_valid_T_1 & _GEN_8)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_3 | ~(_io_cmdOut_valid_T_1 & _GEN_8)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_10) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_10) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_2)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_8)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_8)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_5)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_5)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_9)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -14249,15 +14249,15 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -14271,25 +14271,25 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_8 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_8 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -14298,7 +14298,7 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -14314,25 +14314,25 @@ module ClosedPageBankScheduler_8(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -14528,70 +14528,70 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'h9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'h9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -14611,53 +14611,53 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h1
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h1) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -14673,15 +14673,15 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -14695,25 +14695,25 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_9 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_9 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -14722,7 +14722,7 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -14738,25 +14738,25 @@ module ClosedPageBankScheduler_9(	// @[memorysim/memctrl/src/main/scala/memorysi
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -14952,70 +14952,70 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hA;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hA;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -15035,53 +15035,53 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h2
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h2) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15097,15 +15097,15 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15119,25 +15119,25 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_10 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_10 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -15146,7 +15146,7 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -15162,25 +15162,25 @@ module ClosedPageBankScheduler_10(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -15376,70 +15376,70 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hB;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hB;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -15459,53 +15459,53 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h3
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h3) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:26]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :62:68]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15521,15 +15521,15 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15543,25 +15543,25 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_11 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_11 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -15570,7 +15570,7 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -15586,25 +15586,25 @@ module ClosedPageBankScheduler_11(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -15800,70 +15800,70 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hC;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hC;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -15883,53 +15883,53 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h4
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h4) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15945,15 +15945,15 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -15967,25 +15967,25 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_12 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_12 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -15994,7 +15994,7 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -16010,25 +16010,25 @@ module ClosedPageBankScheduler_12(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -16224,70 +16224,70 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hD;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hD;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -16307,53 +16307,53 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h5
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h5) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -16369,15 +16369,15 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -16391,25 +16391,25 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_13 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_13 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -16418,7 +16418,7 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -16434,25 +16434,25 @@ module ClosedPageBankScheduler_13(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -16648,70 +16648,70 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hE;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hE;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -16731,53 +16731,53 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h6
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h6) & _respDec_io_rankIndex
-    & _respDec_io_bankIndex == 3'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & _respDec_io_bankIndex == 3'h6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -16793,15 +16793,15 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -16815,25 +16815,25 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_14 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_14 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -16842,7 +16842,7 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -16858,25 +16858,25 @@ module ClosedPageBankScheduler_14(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 // external module BankSchedulerPerformanceStatisticsInput
@@ -17072,70 +17072,70 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
   output [2:0]  io_stateOut	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:13:14]
 );
 
-  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61]
+  wire        io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63]
   wire        cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
   wire [2:0]  _respDec_io_bankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   wire        _respDec_io_rankIndex;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23]
   reg  [63:0] refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
-  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:26]
-  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26]
-  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26, :64:26, :65:{18,29,39}]
-  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+  reg         reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+  reg         reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+  reg  [31:0] reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+  reg  [31:0] reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
+  reg  [63:0] reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+  reg  [1:0]  state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+  reg  [1:0]  prevState;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:63:68]
+  reg         sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68]
+  wire        _GEN = prevState == state & sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68, :64:68, :65:{18,29,39}]
+  wire        _io_cmdOut_valid_T = state == 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+  wire        _io_cmdOut_valid_T_1 = state == 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
   wire        io_cmdOut_valid_0 =
-    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :83:21, :92:{40,60,69,78,81}, :120:17]
-  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :56:32, :96:26]
-  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :147:20, :221:61]
+    (_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) & ~sentCmd & ~cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :83:21, :92:{40,60,69,78,81}, :120:17]
+  wire [31:0] responseDataWire = reqIsRead ? io_phyResp_bits_data : reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :56:29, :96:26]
+  wire        _GEN_0 = sentCmd & io_phyResp_ready_0 & io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :147:20, :226:63]
   wire        _GEN_1 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _GEN_2 = io_phyResp_bits_request_id_bank_id == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _GEN_3 = io_phyResp_bits_request_id_scheduler_identifier == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :115:29]
   wire        _GEN_4 =
     _GEN_0 & io_phyResp_bits_request_id_request_id == reqPacketReg_request_id
     & ~(|io_phyResp_bits_request_id_internal_req_id)
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
-  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, :92:40, :106:22, :120:17]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:{20,39}]
+  wire        _GEN_5 = ~(|state) | _io_cmdOut_valid_T;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, :92:40, :106:22, :120:17]
   wire        io_resp_valid_0 = ~_GEN_5 & _io_cmdOut_valid_T_1 & _GEN_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40, :106:22, :120:17, :147:39]
   assign cmdReg_cs =
-    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :180:22]
-  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
-  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :85:21, :92:{40,69}, :120:17]
+    ~(|state) | ~(_io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | (&state)) | sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :83:21, :92:40, :120:17, :137:22, :154:22, :185:22]
+  wire        cmdReg_ras = ~_GEN_5 & _io_cmdOut_valid_T_1 & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :84:21, :92:{40,69}, :106:22, :120:17, :137:22]
+  wire        cmdReg_cas = (|state) & _io_cmdOut_valid_T & ~sentCmd;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :85:21, :92:{40,69}, :120:17]
   wire        cmdReg_we =
     (|state)
     & (_io_cmdOut_valid_T
          ? ~sentCmd
-         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :64:26, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:19, :180:22]
+         : _io_cmdOut_valid_T_1 ? ~sentCmd & reqIsRead : (&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :64:68, :77:26, :86:21, :92:{40,69}, :120:17, :137:22, :154:22, :159:20, :185:22]
   wire        _GEN_6 =
-    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :64:26, :77:26, :81:21, :92:{40,69}, :120:17, :180:22, :186:21]
-  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hF;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :81:21, :120:17, :186:21]
-  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:28, :81:21, :87:21, :120:17]
+    ~(|state) | _io_cmdOut_valid_T | _io_cmdOut_valid_T_1 | ~((&state) & ~sentCmd);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :64:68, :77:26, :81:21, :92:{40,69}, :120:17, :185:22, :191:27]
+  wire [31:0] cmdReg_addr = _GEN_6 ? reqAddrReg : 32'hF;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :81:21, :120:17, :191:27]
+  wire [63:0] cmdReg_request_id_request_id = _GEN_6 ? reqPacketReg_request_id : 64'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :57:25, :81:21, :87:21, :120:17]
   wire [63:0] cmdReg_request_id_internal_req_id = _GEN_6 ? 64'h0 : refreshCounter;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:28:29, :35:31, :81:21, :87:21, :120:17]
   wire        _GEN_7 =
     _GEN_0 & ~(|io_phyResp_bits_request_id_request_id)
     & io_phyResp_bits_request_id_internal_req_id == refreshCounter
-    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :192:39]
+    & ~(|io_phyResp_bits_request_id_channel_id) & _GEN_1 & _GEN_2 & _GEN_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :147:20, :197:39]
   reg         casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:120:17, :147:104]
-  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_8 = io_cmdOut_ready & io_cmdOut_valid_0 | _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:78, :144:28, :145:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   wire        _GEN_9 = ~_GEN_4 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :144:28, :145:17, :147:{39,104}, :148:17]
-  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
-    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+  always_comb begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
+    casez (state)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b00:
-        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}, :92:40, :120:17, :147:104, :164:104, :197:108]
       2'b01:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       2'b10:
-        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :192:108]
+        casez_tmp = _GEN_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :147:104, :148:17, :164:104, :197:108]
       default:
-        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :189:28, :192:{39,108}, :194:17]
-    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :65:29, :92:40, :120:17, :147:104, :164:104, :192:108]
+        casez_tmp = ~_GEN_7 & _GEN_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:65:29, :92:40, :120:17, :144:28, :145:17, :147:104, :164:104, :194:28, :197:{39,108}, :199:21]
+    endcase	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :65:29, :92:40, :120:17, :147:104, :164:104, :197:108]
   end // always_comb
   wire        _io_phyResp_ready_T_14 =
-    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28, :110:19]
+    io_phyResp_bits_request_id_request_id == reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25, :110:19]
   wire        _io_phyResp_ready_T_19 = io_phyResp_bits_request_id_rank_id == 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :113:16]
   wire        _io_phyResp_ready_T_21 = io_phyResp_bits_request_id_bank_id == 64'h7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:45:36, :114:16]
   wire        _io_phyResp_ready_T_23 =
@@ -17155,53 +17155,53 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
        & io_phyResp_bits_request_id_rank_id == 64'h1
        & io_phyResp_bits_request_id_bank_id == 64'h7
        & io_phyResp_bits_request_id_scheduler_identifier == 64'h7) & _respDec_io_rankIndex
-    & (&_respDec_io_bankIndex);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:26, :64:26, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :217:{12,26}, :218:{12,27,92}, :219:{12,25}, :221:61, :222:25]
-  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :106:22, :120:17, :147:39, :164:104, :169:28, :173:17]
-  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :62:26, :77:26, :120:17, :122:25, :125:23, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    & (&_respDec_io_bankIndex);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:23:23, :35:31, :45:36, :62:68, :64:68, :92:40, :110:19, :111:24, :112:19, :113:16, :114:16, :115:29, :222:{12,26}, :223:{14,29,94}, :224:{14,27}, :226:63, :227:27]
+  wire        _GEN_10 = _GEN_4 & io_resp_ready & io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :106:22, :120:17, :147:39, :164:104, :169:28, :178:26]
+  wire        _GEN_11 = ~(|state) & io_req_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+  wire        _GEN_12 = ~(|state) & _GEN_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :62:68, :77:26, :120:17, :122:25, :125:22, src/main/scala/chisel3/util/Decoupled.scala:51:35]
   always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     if (reset) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
       refreshCounter <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31]
-      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :54:32]
-      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32, :56:32]
-      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :64:26]
+      reqIsRead <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+      reqIsWrite <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :54:29]
+      reqAddrReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+      reqWdataReg <= 32'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29, :56:29]
+      state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+      sentCmd <= 1'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :64:68]
     end
     else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
-      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:26, :92:40, :106:22, :120:17, :164:104, :169:28, :173:17, :174:26]
+      if (_GEN_5 | ~(_io_cmdOut_valid_T_1 & _GEN_10)) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :62:68, :92:40, :106:22, :120:17, :164:104, :169:28, :178:26, :179:26]
       end
       else	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :120:17]
-        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :174:44]
-      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
-        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+        refreshCounter <= refreshCounter + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:35:31, :179:44]
+      if (_GEN_12) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+        reqIsRead <= io_req_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+        reqIsWrite <= io_req_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+        reqAddrReg <= io_req_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
+        reqWdataReg <= io_req_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
       end
-      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26]
+      if (|state) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26]
         if (_io_cmdOut_valid_T) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
           if (_GEN_4)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:147:39]
-            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+            state <= 2'h2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
         else if (_io_cmdOut_valid_T_1) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:40]
-          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :164:104, :169:28, :173:17]
-            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
+          if (_GEN_10)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :164:104, :169:28, :178:26]
+            state <= 2'h3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
         end
-        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40, :120:17, :192:{39,108}, :195:15]
-          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26]
-        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :120:17, :147:104]
+        else if ((&state) & _GEN_7)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40, :120:17, :197:{39,108}, :200:21]
+          state <= 2'h0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68]
+        sentCmd <= casez_tmp;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :120:17, :147:104]
       end
       else begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:77:26]
         if (_GEN_11)	// @[src/main/scala/chisel3/util/Decoupled.scala:51:35]
-          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :92:40]
-        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:26, :65:{18,29,39}]
+          state <= 2'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :92:40]
+        sentCmd <= _GEN;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:64:68, :65:{18,29,39}]
       end
     end
-    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32, :120:17, :122:25, :125:23]
-      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
-    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :63:26]
+    if (_GEN_12)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29, :120:17, :122:25, :125:22]
+      reqPacketReg_request_id <= io_req_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
+    prevState <= state;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :63:68]
   end // always @(posedge)
   `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
     `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -17217,15 +17217,15 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
           _RANDOM[i] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
         refreshCounter = {_RANDOM[5'h4], _RANDOM[5'h5]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :35:31]
-        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :54:32]
-        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :55:32]
-        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32, :56:32]
+        reqIsRead = _RANDOM[5'hA][2];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+        reqIsWrite = _RANDOM[5'hA][3];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :54:29]
+        reqAddrReg = {_RANDOM[5'hA][31:4], _RANDOM[5'hB][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :55:29]
+        reqWdataReg = {_RANDOM[5'hB][31:4], _RANDOM[5'hC][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29, :56:29]
         reqPacketReg_request_id =
-          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32, :57:28]
-        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26]
-        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :63:26]
-        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :64:26]
+          {_RANDOM[5'hC][31:4], _RANDOM[5'hD], _RANDOM[5'hE][3:0]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29, :57:25]
+        state = _RANDOM[5'h18][5:4];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68]
+        prevState = _RANDOM[5'h18][7:6];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :63:68]
+        sentCmd = _RANDOM[5'h18][8];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :64:68]
       `endif // RANDOMIZE_REG_INIT
     end // initial
     `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7]
@@ -17239,25 +17239,25 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_rowIndex    (/* unused */),
     .io_columnIndex (/* unused */)
   );
-  BankSchedulerPerformanceStatistics_15 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:203:22]
+  BankSchedulerPerformanceStatistics_15 perf (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:208:22]
     .clock                                                (clock),
     .reset                                                (reset),
-    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:26, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+    .io_in_fire                                           (~(|state) & io_req_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:62:68, :77:26, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_in_bits_rd_en                                     (io_req_bits_rd_en),
     .io_in_bits_wr_en                                     (io_req_bits_wr_en),
     .io_in_bits_addr                                      (io_req_bits_addr),
     .io_in_bits_request_id                                (io_req_bits_request_id),
     .io_out_fire
       (io_resp_ready & io_resp_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:106:22, :120:17, src/main/scala/chisel3/util/Decoupled.scala:51:35]
-    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:32]
-    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:32]
-    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:32]
+    .io_out_bits_rd_en                                    (reqIsRead),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:53:29]
+    .io_out_bits_wr_en                                    (reqIsWrite),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:54:29]
+    .io_out_bits_addr                                     (reqAddrReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:55:29]
     .io_out_bits_data                                     (responseDataWire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:96:26]
-    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:28]
+    .io_out_bits_request_id                               (reqPacketReg_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:57:25]
     .io_mem_request_fire
       (io_cmdOut_ready & io_cmdOut_valid_0),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:92:78, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_request_bits_addr                             (cmdReg_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:81:21, :120:17]
-    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:32]
+    .io_mem_request_bits_data                             (reqWdataReg),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:56:29]
     .io_mem_request_bits_cs                               (cmdReg_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:83:21, :120:17]
     .io_mem_request_bits_ras                              (cmdReg_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:84:21, :120:17, :137:22]
     .io_mem_request_bits_cas                              (cmdReg_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:85:21, :120:17]
@@ -17266,7 +17266,7 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_request_bits_request_id_internal_req_id
       (cmdReg_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:87:21, :120:17]
     .io_mem_response_fire
-      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:221:61, src/main/scala/chisel3/util/Decoupled.scala:51:35]
+      (io_phyResp_ready_0 & io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:226:63, src/main/scala/chisel3/util/Decoupled.scala:51:35]
     .io_mem_response_bits_addr                            (io_phyResp_bits_addr),
     .io_mem_response_bits_data                            (io_phyResp_bits_data),
     .io_mem_response_bits_request_id_request_id
@@ -17282,25 +17282,25 @@ module ClosedPageBankScheduler_15(	// @[memorysim/memctrl/src/main/scala/memorys
     .io_mem_response_bits_request_id_scheduler_identifier
       (io_phyResp_bits_request_id_scheduler_identifier)
   );
-  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:26, :77:26]
+  assign io_req_ready = ~(|state);	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :62:68, :77:26]
   assign io_resp_valid = io_resp_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :106:22, :120:17]
-  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32]
-  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:32]
-  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:32]
-  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_resp_bits_rd_en = reqIsRead;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29]
+  assign io_resp_bits_wr_en = reqIsWrite;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :54:29]
+  assign io_resp_bits_addr = reqAddrReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :55:29]
+  assign io_resp_bits_wdata = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_resp_bits_data = responseDataWire;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :96:26]
-  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:28]
+  assign io_resp_bits_request_id = reqPacketReg_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :57:25]
   assign io_cmdOut_valid = io_cmdOut_valid_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :92:78]
   assign io_cmdOut_bits_addr = cmdReg_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :81:21, :120:17]
-  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:32]
+  assign io_cmdOut_bits_data = reqWdataReg;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :56:29]
   assign io_cmdOut_bits_cs = cmdReg_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :83:21, :120:17]
   assign io_cmdOut_bits_ras = cmdReg_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :84:21, :120:17, :137:22]
   assign io_cmdOut_bits_cas = cmdReg_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :85:21, :120:17]
   assign io_cmdOut_bits_we = cmdReg_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :86:21, :120:17]
   assign io_cmdOut_bits_request_id_request_id = cmdReg_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
   assign io_cmdOut_bits_request_id_internal_req_id = cmdReg_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :87:21, :120:17]
-  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :221:61]
-  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:32, :62:26, :66:15]
+  assign io_phyResp_ready = io_phyResp_ready_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :226:63]
+  assign io_stateOut = {1'h0, state};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/schedulers/ClosedPageBankScheduler.scala:7:7, :53:29, :62:68, :66:15]
 endmodule
 
 module MultiDeqQueue(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/controller/MultiDequeueQueue.scala:7:7]
@@ -21805,157 +21805,158 @@ module SystemQueuePerformanceStatistics(	// @[memorysim/memctrl/src/main/scala/m
   );
 endmodule
 
-module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-  input         clock,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-                reset,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-  output        io_in_ready,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  input         io_in_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_in_bits_rd_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_in_bits_wr_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  input  [31:0] io_in_bits_addr,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_in_bits_wdata,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  input         io_out_ready,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output        io_out_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_out_bits_rd_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_out_bits_wr_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [31:0] io_out_bits_addr,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_out_bits_wdata,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_out_bits_data,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [63:0] io_out_bits_request_id,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [2:0]  io_rankState_0,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_rankState_1,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [3:0]  io_reqQueueCount,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_respQueueCount,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [2:0]  io_fsmReqQueueCounts_0,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_1,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_2,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_3,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_4,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_5,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_6,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_7,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_8,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_9,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_10,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_11,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_12,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_13,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_14,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-                io_fsmReqQueueCounts_15,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
-  output [1:0]  io_activeRanks	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:13:14]
+module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+  input         clock,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+                reset,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+  output        io_in_ready,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  input         io_in_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_in_bits_rd_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_in_bits_wr_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  input  [31:0] io_in_bits_addr,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_in_bits_wdata,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  input         io_out_ready,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output        io_out_valid,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_out_bits_out_rd_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_out_bits_out_wr_en,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [31:0] io_out_bits_out_addr,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_out_bits_out_wdata,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_out_bits_out_data,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [63:0] io_out_bits_out_request_id,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_out_bits_next_available_request_id,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [2:0]  io_rankState_0,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_rankState_1,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [3:0]  io_reqQueueCount,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_respQueueCount,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [2:0]  io_fsmReqQueueCounts_0,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_1,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_2,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_3,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_4,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_5,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_6,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_7,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_8,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_9,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_10,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_11,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_12,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_13,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_14,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+                io_fsmReqQueueCounts_15,	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
+  output [1:0]  io_activeRanks	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:12:14]
 );
 
-  wire        _respArb_io_in_0_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire        _respArb_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire        _respArb_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire        _respArb_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire [31:0] _respArb_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire [31:0] _respArb_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire [31:0] _respArb_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire [63:0] _respArb_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-  wire        _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [31:0] _controllers_0_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [31:0] _controllers_0_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [31:0] _controllers_0_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_memCmd_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [31:0] _controllers_0_io_memCmd_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [31:0] _controllers_0_io_memCmd_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_memCmd_bits_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_memCmd_bits_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_memCmd_bits_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_memCmd_bits_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_channel_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_rank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_bank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [63:0] _controllers_0_io_memCmd_bits_request_id_scheduler_identifier;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _controllers_0_io_phyResp_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [2:0]  _controllers_0_io_rankState_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [2:0]  _controllers_0_io_rankState_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_reqQueueCount;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_12;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_13;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_14;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_15;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-  wire        _channels_0_io_memCmd_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire        _channels_0_io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [31:0] _channels_0_io_phyResp_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [31:0] _channels_0_io_phyResp_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_channel_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_rank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_bank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  wire [63:0] _channels_0_io_phyResp_bits_request_id_scheduler_identifier;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-  reg  [63:0] requestId;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:26]
-  wire        inputFire = io_in_valid & _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:21:31, :38:20]
-  always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-    if (reset)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-      requestId <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:26]
-    else if (inputFire)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:21:31]
-      requestId <= requestId + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:26, :22:44]
+  wire        _respArb_io_in_0_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire        _respArb_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire        _respArb_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire        _respArb_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire [31:0] _respArb_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire [31:0] _respArb_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire [31:0] _respArb_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire [63:0] _respArb_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+  wire        _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [31:0] _controllers_0_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [31:0] _controllers_0_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [31:0] _controllers_0_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_memCmd_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [31:0] _controllers_0_io_memCmd_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [31:0] _controllers_0_io_memCmd_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_memCmd_bits_cs;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_memCmd_bits_ras;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_memCmd_bits_cas;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_memCmd_bits_we;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_channel_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_rank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_bank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [63:0] _controllers_0_io_memCmd_bits_request_id_scheduler_identifier;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _controllers_0_io_phyResp_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [2:0]  _controllers_0_io_rankState_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [2:0]  _controllers_0_io_rankState_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_reqQueueCount;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_2;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_3;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_4;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_5;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_6;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_7;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_8;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_9;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_10;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_11;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_12;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_13;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_14;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire [1:0]  _controllers_0_io_fsmReqQueueCounts_15;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+  wire        _channels_0_io_memCmd_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire        _channels_0_io_phyResp_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [31:0] _channels_0_io_phyResp_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [31:0] _channels_0_io_phyResp_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_internal_req_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_channel_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_rank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_bank_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  wire [63:0] _channels_0_io_phyResp_bits_request_id_scheduler_identifier;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+  reg  [63:0] requestId;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:19:26]
+  wire        inputFire = io_in_valid & _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:31, :37:20]
+  always @(posedge clock) begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+    if (reset)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+      requestId <= 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:19:26]
+    else if (inputFire)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:31]
+      requestId <= requestId + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:19:26, :21:44]
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-    `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-      `FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
+  `ifdef ENABLE_INITIAL_REG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+    `ifdef FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+      `FIRRTL_BEFORE_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
     `endif // FIRRTL_BEFORE_INITIAL
-    logic [31:0] _RANDOM[0:1];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-    initial begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-      `ifdef INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-        `INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
+    logic [31:0] _RANDOM[0:1];	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+    initial begin	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+      `ifdef INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+        `INIT_RANDOM_PROLOG_	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
+      `ifdef RANDOMIZE_REG_INIT	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
         for (logic [1:0] i = 2'h0; i < 2'h2; i += 2'h1) begin
-          _RANDOM[i[0]] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-        end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-        requestId = {_RANDOM[1'h0], _RANDOM[1'h1]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :20:26]
+          _RANDOM[i[0]] = `RANDOM;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+        end	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+        requestId = {_RANDOM[1'h0], _RANDOM[1'h1]};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :19:26]
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
-      `FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7]
+    `ifdef FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
+      `FIRRTL_AFTER_INITIAL	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7]
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  Channel channels_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+  Channel channels_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .clock                                           (clock),
     .reset                                           (reset),
     .io_memCmd_ready                                 (_channels_0_io_memCmd_ready),
-    .io_memCmd_valid                                 (_controllers_0_io_memCmd_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_addr                             (_controllers_0_io_memCmd_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_data                             (_controllers_0_io_memCmd_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_cs                               (_controllers_0_io_memCmd_bits_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_ras                              (_controllers_0_io_memCmd_bits_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_cas                              (_controllers_0_io_memCmd_bits_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_memCmd_bits_we                               (_controllers_0_io_memCmd_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+    .io_memCmd_valid                                 (_controllers_0_io_memCmd_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_addr                             (_controllers_0_io_memCmd_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_data                             (_controllers_0_io_memCmd_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_cs                               (_controllers_0_io_memCmd_bits_cs),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_ras                              (_controllers_0_io_memCmd_bits_ras),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_cas                              (_controllers_0_io_memCmd_bits_cas),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_memCmd_bits_we                               (_controllers_0_io_memCmd_bits_we),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_request_id
-      (_controllers_0_io_memCmd_bits_request_id_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_internal_req_id
-      (_controllers_0_io_memCmd_bits_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_channel_id
-      (_controllers_0_io_memCmd_bits_request_id_channel_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_channel_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_rank_id
-      (_controllers_0_io_memCmd_bits_request_id_rank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_rank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_bank_id
-      (_controllers_0_io_memCmd_bits_request_id_bank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_bank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_memCmd_bits_request_id_scheduler_identifier
-      (_controllers_0_io_memCmd_bits_request_id_scheduler_identifier),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_phyResp_ready                                (_controllers_0_io_phyResp_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+      (_controllers_0_io_memCmd_bits_request_id_scheduler_identifier),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_phyResp_ready                                (_controllers_0_io_phyResp_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_phyResp_valid                                (_channels_0_io_phyResp_valid),
     .io_phyResp_bits_addr                            (_channels_0_io_phyResp_bits_addr),
     .io_phyResp_bits_data                            (_channels_0_io_phyResp_bits_data),
@@ -21972,7 +21973,7 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_phyResp_bits_request_id_scheduler_identifier
       (_channels_0_io_phyResp_bits_request_id_scheduler_identifier)
   );
-  MultiRankMemoryController controllers_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+  MultiRankMemoryController controllers_0 (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .clock                                           (clock),
     .reset                                           (reset),
     .io_in_ready                                     (_controllers_0_io_in_ready),
@@ -21981,8 +21982,8 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_in_bits_wr_en                                (io_in_bits_wr_en),
     .io_in_bits_addr                                 (io_in_bits_addr),
     .io_in_bits_wdata                                (io_in_bits_wdata),
-    .io_in_bits_request_id                           (requestId),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:26]
-    .io_out_ready                                    (_respArb_io_in_0_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
+    .io_in_bits_request_id                           (requestId),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:19:26]
+    .io_out_ready                                    (_respArb_io_in_0_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
     .io_out_valid                                    (_controllers_0_io_out_valid),
     .io_out_bits_rd_en                               (_controllers_0_io_out_bits_rd_en),
     .io_out_bits_wr_en                               (_controllers_0_io_out_bits_wr_en),
@@ -21991,7 +21992,7 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_out_bits_data                                (_controllers_0_io_out_bits_data),
     .io_out_bits_request_id
       (_controllers_0_io_out_bits_request_id),
-    .io_memCmd_ready                                 (_channels_0_io_memCmd_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+    .io_memCmd_ready                                 (_channels_0_io_memCmd_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_memCmd_valid                                 (_controllers_0_io_memCmd_valid),
     .io_memCmd_bits_addr                             (_controllers_0_io_memCmd_bits_addr),
     .io_memCmd_bits_data                             (_controllers_0_io_memCmd_bits_data),
@@ -22012,21 +22013,21 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_memCmd_bits_request_id_scheduler_identifier
       (_controllers_0_io_memCmd_bits_request_id_scheduler_identifier),
     .io_phyResp_ready                                (_controllers_0_io_phyResp_ready),
-    .io_phyResp_valid                                (_channels_0_io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-    .io_phyResp_bits_addr                            (_channels_0_io_phyResp_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
-    .io_phyResp_bits_data                            (_channels_0_io_phyResp_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+    .io_phyResp_valid                                (_channels_0_io_phyResp_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+    .io_phyResp_bits_addr                            (_channels_0_io_phyResp_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
+    .io_phyResp_bits_data                            (_channels_0_io_phyResp_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_request_id
-      (_channels_0_io_phyResp_bits_request_id_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_internal_req_id
-      (_channels_0_io_phyResp_bits_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_internal_req_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_channel_id
-      (_channels_0_io_phyResp_bits_request_id_channel_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_channel_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_rank_id
-      (_channels_0_io_phyResp_bits_request_id_rank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_rank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_bank_id
-      (_channels_0_io_phyResp_bits_request_id_bank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_bank_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_phyResp_bits_request_id_scheduler_identifier
-      (_channels_0_io_phyResp_bits_request_id_scheduler_identifier),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:26:20]
+      (_channels_0_io_phyResp_bits_request_id_scheduler_identifier),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:25:20]
     .io_rankState_0                                  (_controllers_0_io_rankState_0),
     .io_rankState_1                                  (_controllers_0_io_rankState_1),
     .io_reqQueueCount                                (_controllers_0_io_reqQueueCount),
@@ -22064,15 +22065,15 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_fsmReqQueueCounts_15
       (_controllers_0_io_fsmReqQueueCounts_15)
   );
-  Arbiter1_ControllerResponse respArb (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
+  Arbiter1_ControllerResponse respArb (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
     .io_in_0_ready           (_respArb_io_in_0_ready),
-    .io_in_0_valid           (_controllers_0_io_out_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_rd_en      (_controllers_0_io_out_bits_rd_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_wr_en      (_controllers_0_io_out_bits_wr_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_addr       (_controllers_0_io_out_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_wdata      (_controllers_0_io_out_bits_wdata),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_data       (_controllers_0_io_out_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
-    .io_in_0_bits_request_id (_controllers_0_io_out_bits_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:38:20]
+    .io_in_0_valid           (_controllers_0_io_out_valid),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_rd_en      (_controllers_0_io_out_bits_rd_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_wr_en      (_controllers_0_io_out_bits_wr_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_addr       (_controllers_0_io_out_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_wdata      (_controllers_0_io_out_bits_wdata),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_data       (_controllers_0_io_out_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
+    .io_in_0_bits_request_id (_controllers_0_io_out_bits_request_id),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:37:20]
     .io_out_ready            (io_out_ready),
     .io_out_valid            (_respArb_io_out_valid),
     .io_out_bits_rd_en       (_respArb_io_out_bits_rd_en),
@@ -22082,52 +22083,53 @@ module MultiChannelSystem(	// @[memorysim/memctrl/src/main/scala/memorysim/memct
     .io_out_bits_data        (_respArb_io_out_bits_data),
     .io_out_bits_request_id  (_respArb_io_out_bits_request_id)
   );
-  SystemQueuePerformanceStatistics perfStats (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:92:29]
+  SystemQueuePerformanceStatistics perfStats (	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:100:29]
     .clock                  (clock),
     .reset                  (reset),
-    .io_in_fire             (inputFire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:21:31]
+    .io_in_fire             (inputFire),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:31]
     .io_in_bits_rd_en       (io_in_bits_rd_en),
     .io_in_bits_wr_en       (io_in_bits_wr_en),
     .io_in_bits_addr        (io_in_bits_addr),
     .io_in_bits_wdata       (io_in_bits_wdata),
-    .io_in_bits_request_id  (requestId),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:20:26]
-    .io_out_fire            (_respArb_io_out_valid & io_out_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23, :94:36]
-    .io_out_bits_rd_en      (_respArb_io_out_bits_rd_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-    .io_out_bits_wr_en      (_respArb_io_out_bits_wr_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-    .io_out_bits_addr       (_respArb_io_out_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-    .io_out_bits_wdata      (_respArb_io_out_bits_wdata),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-    .io_out_bits_data       (_respArb_io_out_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
-    .io_out_bits_request_id (_respArb_io_out_bits_request_id)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:81:23]
+    .io_in_bits_request_id  (requestId),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:19:26]
+    .io_out_fire            (_respArb_io_out_valid & io_out_ready),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23, :102:36]
+    .io_out_bits_rd_en      (_respArb_io_out_bits_rd_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+    .io_out_bits_wr_en      (_respArb_io_out_bits_wr_en),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+    .io_out_bits_addr       (_respArb_io_out_bits_addr),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+    .io_out_bits_wdata      (_respArb_io_out_bits_wdata),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+    .io_out_bits_data       (_respArb_io_out_bits_data),	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
+    .io_out_bits_request_id (_respArb_io_out_bits_request_id)	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:80:23]
   );
-  assign io_in_ready = _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20]
-  assign io_out_valid = _respArb_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_rd_en = _respArb_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_wr_en = _respArb_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_addr = _respArb_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_wdata = _respArb_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_data = _respArb_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_out_bits_request_id = _respArb_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :81:23]
-  assign io_rankState_0 = _controllers_0_io_rankState_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20]
-  assign io_rankState_1 = _controllers_0_io_rankState_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20]
-  assign io_reqQueueCount = {2'h0, _controllers_0_io_reqQueueCount};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :104:24]
-  assign io_fsmReqQueueCounts_0 = {1'h0, _controllers_0_io_fsmReqQueueCounts_0};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_1 = {1'h0, _controllers_0_io_fsmReqQueueCounts_1};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_2 = {1'h0, _controllers_0_io_fsmReqQueueCounts_2};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_3 = {1'h0, _controllers_0_io_fsmReqQueueCounts_3};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_4 = {1'h0, _controllers_0_io_fsmReqQueueCounts_4};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_5 = {1'h0, _controllers_0_io_fsmReqQueueCounts_5};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_6 = {1'h0, _controllers_0_io_fsmReqQueueCounts_6};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_7 = {1'h0, _controllers_0_io_fsmReqQueueCounts_7};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_8 = {1'h0, _controllers_0_io_fsmReqQueueCounts_8};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_9 = {1'h0, _controllers_0_io_fsmReqQueueCounts_9};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_10 = {1'h0, _controllers_0_io_fsmReqQueueCounts_10};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_11 = {1'h0, _controllers_0_io_fsmReqQueueCounts_11};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_12 = {1'h0, _controllers_0_io_fsmReqQueueCounts_12};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_13 = {1'h0, _controllers_0_io_fsmReqQueueCounts_13};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_14 = {1'h0, _controllers_0_io_fsmReqQueueCounts_14};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
-  assign io_fsmReqQueueCounts_15 = {1'h0, _controllers_0_io_fsmReqQueueCounts_15};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :106:24]
+  assign io_in_ready = _controllers_0_io_in_ready;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20]
+  assign io_out_valid = _respArb_io_out_valid;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_rd_en = _respArb_io_out_bits_rd_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_wr_en = _respArb_io_out_bits_wr_en;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_addr = _respArb_io_out_bits_addr;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_wdata = _respArb_io_out_bits_wdata;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_data = _respArb_io_out_bits_data;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_out_request_id = _respArb_io_out_bits_request_id;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :80:23]
+  assign io_out_bits_next_available_request_id = requestId + 64'h1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :19:26, :94:50]
+  assign io_rankState_0 = _controllers_0_io_rankState_0;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20]
+  assign io_rankState_1 = _controllers_0_io_rankState_1;	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20]
+  assign io_reqQueueCount = {2'h0, _controllers_0_io_reqQueueCount};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :112:24]
+  assign io_fsmReqQueueCounts_0 = {1'h0, _controllers_0_io_fsmReqQueueCounts_0};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_1 = {1'h0, _controllers_0_io_fsmReqQueueCounts_1};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_2 = {1'h0, _controllers_0_io_fsmReqQueueCounts_2};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_3 = {1'h0, _controllers_0_io_fsmReqQueueCounts_3};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_4 = {1'h0, _controllers_0_io_fsmReqQueueCounts_4};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_5 = {1'h0, _controllers_0_io_fsmReqQueueCounts_5};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_6 = {1'h0, _controllers_0_io_fsmReqQueueCounts_6};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_7 = {1'h0, _controllers_0_io_fsmReqQueueCounts_7};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_8 = {1'h0, _controllers_0_io_fsmReqQueueCounts_8};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_9 = {1'h0, _controllers_0_io_fsmReqQueueCounts_9};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_10 = {1'h0, _controllers_0_io_fsmReqQueueCounts_10};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_11 = {1'h0, _controllers_0_io_fsmReqQueueCounts_11};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_12 = {1'h0, _controllers_0_io_fsmReqQueueCounts_12};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_13 = {1'h0, _controllers_0_io_fsmReqQueueCounts_13};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_14 = {1'h0, _controllers_0_io_fsmReqQueueCounts_14};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
+  assign io_fsmReqQueueCounts_15 = {1'h0, _controllers_0_io_fsmReqQueueCounts_15};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :114:24]
   assign io_activeRanks =
-    {1'h0, |_controllers_0_io_rankState_0} + {1'h0, |_controllers_0_io_rankState_1};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:9:7, :38:20, :107:{60,63}]
+    {1'h0, |_controllers_0_io_rankState_0} + {1'h0, |_controllers_0_io_rankState_1};	// @[memorysim/memctrl/src/main/scala/memorysim/memctrl/systems/MultiChannelSystem.scala:8:7, :37:20, :115:{60,63}]
 endmodule
 
 
