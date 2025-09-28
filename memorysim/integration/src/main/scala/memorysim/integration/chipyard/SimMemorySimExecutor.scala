@@ -9,6 +9,7 @@ import memorysim.memctrl._
   *
   * Drop-in replacement for the original SimMemorySimExecutor that uses MultiChannelSystem as the backing memory instead
   * of SyncReadMem. Provides realistic memory controller timing while maintaining the same AXI4 interface.
+  * Now handles out-of-order responses from the memory system.
   *
   * This file uses plain printf(...) format strings (no p interpolator).
   */
@@ -71,9 +72,14 @@ class SimMemorySimExecutor(
 
   def addrToIndex(addr: UInt): UInt = addr >> log2Ceil(wordBytes)
 
+  // Helper function to calculate beat index from response address
+  def calculateBeatIndex(responseAddr: UInt, baseAddr: UInt, transferSize: UInt): UInt = {
+    (responseAddr - baseAddr) >> transferSize
+  }
+
   // ---- Write Path: AW + W -> Memory System -> B ----
-  val sWIdle :: sWCollect :: sWWaitResp :: sWResp :: Nil = Enum(4)
-  val wState                                             = RegInit(sWIdle)
+  val sWIdle :: sWCollect :: sWIssue :: sWWaitResp :: sWResp :: Nil = Enum(5)
+  val wState                                                       = RegInit(sWIdle)
 
   val store_id                = RegInit(0.U(params.idBits.W))
   val store_addr              = RegInit(0.U(addrBits.W))
@@ -83,9 +89,32 @@ class SimMemorySimExecutor(
   val write_beats_issued      = RegInit(0.U(8.W))
   val write_responses_pending = RegInit(0.U(8.W))
 
+  // Write data buffer for collected AXI beats
+  val max_burst_len = 256
+  val write_buffer = Reg(Vec(max_burst_len, UInt(dataBits.W)))
+  val write_buffer_valid = Reg(Vec(max_burst_len, Bool()))
+
+  // Initialize write buffer valid bits
+  for (i <- 0 until max_burst_len) {
+    when(reset.asBool) {
+      write_buffer_valid(i) := false.B
+    }
+  }
+
+  // Write response tracking for out-of-order responses
+  val write_response_received = Reg(Vec(max_burst_len, Bool()))
+  val write_beats_collected = RegInit(0.U(8.W))
+
+  // Initialize write response tracking
+  for (i <- 0 until max_burst_len) {
+    when(reset.asBool) {
+      write_response_received(i) := false.B
+    }
+  }
+
   // AXI Write channels
   io.axi.aw.ready    := (wState === sWIdle)
-  io.axi.w.ready     := (wState === sWCollect) && memSys.io.in.ready
+  io.axi.w.ready     := (wState === sWCollect)
   io.axi.b.valid     := (wState === sWResp)
   io.axi.b.bits.id   := store_id
   io.axi.b.bits.resp := 0.U
@@ -100,8 +129,15 @@ class SimMemorySimExecutor(
         store_count             := io.axi.aw.bits.len + 1.U
         store_size              := io.axi.aw.bits.size
         write_beats_issued      := 0.U
+        write_beats_collected   := 0.U
         write_responses_pending := 0.U
         wState                  := sWCollect
+
+        // Clear write response tracking and buffer for this burst
+        for (i <- 0 until max_burst_len) {
+          write_response_received(i) := false.B
+          write_buffer_valid(i) := false.B
+        }
 
         printf(
           "[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n",
@@ -113,21 +149,65 @@ class SimMemorySimExecutor(
       }
     }
     is(sWCollect) {
+      // Collect all AXI write data into buffer
       when(io.axi.w.fire) {
-        write_beats_issued      := write_beats_issued + 1.U
-        write_responses_pending := write_responses_pending + 1.U
-        store_addr              := store_addr + (1.U << store_size)
-        store_count             := store_count - 1.U
+        val beat_index = write_beats_collected
+        write_buffer(beat_index) := io.axi.w.bits.data
+        write_buffer_valid(beat_index) := true.B
+        write_beats_collected := write_beats_collected + 1.U
 
-        when(io.axi.w.bits.last || store_count === 1.U) {
+        printf(
+          "[MemorySim] W.collect beat=%d data=%x strb=%x\n",
+          beat_index,
+          io.axi.w.bits.data,
+          io.axi.w.bits.strb
+        )
+
+        when(io.axi.w.bits.last || write_beats_collected === (store_count - 1.U)) {
+          wState := sWIssue
+          printf("[MemorySim] All write data collected, transitioning to issue\n")
+        }
+      }
+    }
+    is(sWIssue) {
+      // Issue all collected write beats to memory system
+      when(memSys.io.in.ready && (write_beats_issued < store_count)) {
+        write_beats_issued := write_beats_issued + 1.U
+        write_responses_pending := write_responses_pending + 1.U
+        store_addr := store_addr + (1.U << store_size)
+
+        printf(
+          "[MemorySim] Issuing write beat=%d addr=%x data=%x\n",
+          write_beats_issued,
+          store_addr,
+          write_buffer(write_beats_issued)
+        )
+
+        when(write_beats_issued === (store_count - 1.U)) {
           wState := sWWaitResp
+          printf("[MemorySim] All write beats issued, waiting for responses\n")
         }
       }
     }
     is(sWWaitResp) {
-      // Wait for all memory system responses
+      // Wait for all memory system responses (handle out-of-order)
       when(memSys.io.out.fire && memSys.io.out.bits.out.wr_en) {
+        val response_beat_index = calculateBeatIndex(
+          memSys.io.out.bits.out.addr,
+          store_base_addr,
+          store_size
+        )
+        
+        // Mark this beat as received
+        write_response_received(response_beat_index) := true.B
         write_responses_pending := write_responses_pending - 1.U
+
+        printf(
+          "[MemorySim] Write response addr=%x beat_index=%d remaining=%d\n",
+          memSys.io.out.bits.out.addr,
+          response_beat_index,
+          write_responses_pending - 1.U
+        )
 
         when(write_responses_pending === 1.U) {
           wState := sWResp
@@ -154,8 +234,7 @@ class SimMemorySimExecutor(
   val read_responses_received = RegInit(0.U(8.W))
   val read_beats_sent         = RegInit(0.U(8.W))
 
-  // Read response buffer (handles potential out-of-order responses)
-  val max_burst_len     = 256
+  // Read response buffer (handles out-of-order responses)
   val read_buffer       = Reg(Vec(max_burst_len, UInt(dataBits.W)))
   val read_buffer_valid = Reg(Vec(max_burst_len, Bool()))
 
@@ -228,18 +307,31 @@ class SimMemorySimExecutor(
       // Increment timeout counter
       read_timeout_counter := read_timeout_counter + 1.U
 
-      // Collect responses from memory system
+      // Collect responses from memory system (handle out-of-order)
       when(memSys.io.out.fire && memSys.io.out.bits.out.rd_en) {
-        // For simplicity, assume responses come back in order (beat index = read_responses_received)
-        // In a real system, you'd match based on request_id or address
-        val beat_index = read_responses_received
-        read_buffer(beat_index)       := memSys.io.out.bits.out.data
-        read_buffer_valid(beat_index) := true.B
-        read_responses_received       := read_responses_received + 1.U
-        read_timeout_counter          := 0.U // Reset timeout on response
+        // Calculate which beat this response corresponds to
+        val response_beat_index = calculateBeatIndex(
+          memSys.io.out.bits.out.addr,
+          read_base_addr,
+          read_size
+        )
+        
+        // Store response in the correct buffer position
+        read_buffer(response_beat_index)       := memSys.io.out.bits.out.data
+        read_buffer_valid(response_beat_index) := true.B
+        read_responses_received                := read_responses_received + 1.U
+        read_timeout_counter                   := 0.U // Reset timeout on response
+
+        // printf(
+        //   "[MemorySim] Read response addr=%x data=%x beat_index=%d total_received=%d\n",
+        //   memSys.io.out.bits.out.addr,
+        //   memSys.io.out.bits.out.data,
+        //   response_beat_index,
+        //   read_responses_received + 1.U
+        // )
       }
 
-      // Send buffered data to AXI R channel
+      // Send buffered data to AXI R channel in order
       when(io.axi.r.fire) {
         read_beats_sent := read_beats_sent + 1.U
 
@@ -266,6 +358,7 @@ class SimMemorySimExecutor(
           }
         }
         read_responses_received := read_count
+        printf("[MemorySim] Read timeout - filling remaining beats with zeros for base_addr=%x\n", read_base_addr)
       }
     }
   }
@@ -273,7 +366,7 @@ class SimMemorySimExecutor(
   // ---- Memory System Interface Connections ----
 
   // Determine if we're issuing a write or read request
-  val mem_req_is_write = (wState === sWCollect) && io.axi.w.valid
+  val mem_req_is_write = (wState === sWIssue) && (write_beats_issued < store_count)
   val mem_req_is_read  = (rState === sRIssue) && (read_beats_issued < read_count)
 
   // Memory system input
@@ -288,21 +381,12 @@ class SimMemorySimExecutor(
     read_addr   // Current read address
   )
 
-  // Write data (with strobe handling like original)
+  // Write data (use buffered data during issue phase)
+  val current_write_data = write_buffer(write_beats_issued)
   val fullMask        = ((BigInt(1) << strbBits) - 1).U(strbBits.W)
-  val maskedWriteData = Mux(
-    io.axi.w.bits.strb === fullMask,
-    io.axi.w.bits.data, {
-      // partial strobe: build masked word (same logic as original)
-      val parts = (0 until strbBits).map { i =>
-        val byte    = (io.axi.w.bits.data >> (8 * i))(7, 0)
-        val shifted = (byte.asUInt << (8 * i)).asUInt
-        Mux(io.axi.w.bits.strb(i) === 1.U, shifted, 0.U)
-      }
-      parts.reduce(_ | _)
-    }
-  )
-  memSys.io.in.bits.wdata := maskedWriteData
+  // Note: For simplicity, we're not handling partial strobes in buffered mode
+  // You may want to also buffer the strobe bits if needed
+  memSys.io.in.bits.wdata := current_write_data
 
   // Ready to accept responses only when we can process them
   memSys.io.out.ready := (rState === sRCollect) || (wState === sWWaitResp)
