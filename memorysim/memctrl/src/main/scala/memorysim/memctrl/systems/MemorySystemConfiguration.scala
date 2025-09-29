@@ -13,7 +13,7 @@ class SystemRequest(params: MemoryConfigurationParameters) extends Bundle {
 
 /** System Request interface * */
 class SystemResponse(params: MemoryConfigurationParameters) extends Bundle {
-  val out = new ControllerResponse(params)
+  val out                       = new ControllerResponse(params)
   val next_available_request_id = UInt(params.requestIDBits.W)
 }
 

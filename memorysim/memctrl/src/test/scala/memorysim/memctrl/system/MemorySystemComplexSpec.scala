@@ -100,7 +100,7 @@ class MemorySystemComplexSpec extends AnyFreeSpec with Matchers {
 
           receivedSet += ((raddr, rdata))
           drained += 1
-          
+
           // Optionally verify that next_available_request_id is being provided
           val nextId = dut.io.out.bits.next_available_request_id.peek().litValue
           println(f"[RESP] addr=0x${raddr}%08X, data=0x${rdata}%08X, next_id=$nextId")

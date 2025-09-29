@@ -7,7 +7,7 @@ class SingleChannelSystem(
   localConfig: LocalConfigurationParameters)
     extends Module {
   val io = IO(new MemorySystemIO(params.memConfiguration))
-  
+
   val channel           = Module(
     new Channel(
       params.memConfiguration,
@@ -26,45 +26,45 @@ class SingleChannelSystem(
       params.trackPerformance
     )
   )
-  
+
   // Connect the controller's memory command output to the channel's command input.
   channel.io.memCmd <> memory_controller.io.memCmd
   // Connect the channel's physical memory response back to the controller.
   memory_controller.io.phyResp <> channel.io.phyResp
-  
+
   // Internal request ID register
   val requestId = RegInit(1.U(params.memConfiguration.requestIDBits.W))
-  
+
   // Assume io.in and io.out are Decoupled interfaces.
   val inputFire  = io.in.valid && io.in.ready
   val outputFire = io.out.valid && io.out.ready
-  
+
   // Increment request ID on input fire
   when(inputFire) {
     requestId := requestId + 1.U
   }
-  
+
   // Wire input to memory controller, appending request_id
   memory_controller.io.in.valid := io.in.valid
   io.in.ready                   := memory_controller.io.in.ready
   val ctrlReq = Wire(new ControllerRequest(params.memConfiguration))
-  ctrlReq.rd_en      := io.in.bits.rd_en
-  ctrlReq.wr_en      := io.in.bits.wr_en
-  ctrlReq.addr       := io.in.bits.addr
-  ctrlReq.wdata      := io.in.bits.wdata
-  ctrlReq.request_id := requestId
+  ctrlReq.rd_en                := io.in.bits.rd_en
+  ctrlReq.wr_en                := io.in.bits.wr_en
+  ctrlReq.addr                 := io.in.bits.addr
+  ctrlReq.wdata                := io.in.bits.wdata
+  ctrlReq.request_id           := requestId
   memory_controller.io.in.bits := ctrlReq
-  
+
   // Connect the output using the new SystemResponse structure
-  io.out.valid := memory_controller.io.out.valid
+  io.out.valid                   := memory_controller.io.out.valid
   memory_controller.io.out.ready := io.out.ready
-  
+
   // Create SystemResponse bundle and connect fields
   val sysResp = Wire(new SystemResponse(params.memConfiguration))
-  sysResp.out := memory_controller.io.out.bits
+  sysResp.out                       := memory_controller.io.out.bits
   sysResp.next_available_request_id := requestId + 1.U
-  io.out.bits := sysResp
-  
+  io.out.bits                       := sysResp
+
   // If performance tracking is enabled:
   if (params.trackPerformance) {
     val perfStats = Module(new SystemQueuePerformanceStatistics(params.memConfiguration))
@@ -72,15 +72,15 @@ class SingleChannelSystem(
     perfStats.io.in_fire  := inputFire
     perfStats.io.in_bits  := ctrlReq
     perfStats.io.out_fire := outputFire
-    perfStats.io.out_bits := io.out.bits.out  // Updated to use .out field
+    perfStats.io.out_bits := io.out.bits.out // Updated to use .out field
   }
-  
-  io.rankState := memory_controller.io.rankState
+
+  io.rankState         := memory_controller.io.rankState
   // Connect internal queue counts
   io.reqQueueCount     := memory_controller.io.reqQueueCount
   io.respQueueCount    := memory_controller.io.respQueueCount
   io.fsmReqQueueCounts := memory_controller.io.fsmReqQueueCounts
-  
+
   // Calculate the number of active ranks
   val activeRanksCount = memory_controller.io.rankState.count(_ =/= 0.U)
   // Expose the number of active ranks to the top-level I/O

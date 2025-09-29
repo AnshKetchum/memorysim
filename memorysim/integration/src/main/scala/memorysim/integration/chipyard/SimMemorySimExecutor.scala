@@ -7,8 +7,8 @@ import memorysim.memctrl._
 
 /** Minimal port of SimMemorySimExecutorDefault using MemorySystemIO
   *
-  * This is the smallest possible change from the reference implementation,
-  * just replacing direct SyncReadMem access with the MemorySystemIO interface.
+  * This is the smallest possible change from the reference implementation, just replacing direct SyncReadMem access
+  * with the MemorySystemIO interface.
   */
 class SimMemorySimExecutor(
   memSize:  BigInt,
@@ -33,20 +33,18 @@ class SimMemorySimExecutor(
   val depth = if (words <= Int.MaxValue) words.toInt else Int.MaxValue
 
   // Replace SyncReadMem with SyncReadMemWrapper
-  val curMemConfiguration = MemoryConfigurationParameters(
-    addressWidth = addrBits,
-    dataWidth = dataBits,
-    numberOfChannels = 1,
-    numberOfRanks = 2,
-    numberOfBanks = 8,
-    memoryQueueSize = 8
-  )
-
   val memParams = SingleChannelMemoryConfigurationParams(
-    memConfiguration = curMemConfiguration,
+    memConfiguration = MemoryConfigurationParameters(
+      addressWidth = addrBits,
+      dataWidth = dataBits,
+      numberOfChannels = 1,
+      numberOfRanks = 2,
+      numberOfBanks = 8,
+      memoryQueueSize = 8
+    ),
     bankConfiguration = DRAMBankParameters(), // WARNING: Using default HBM2 timing
     controllerConfiguration = MemoryControllerParameters(
-      queueSize = 1,
+      queueSize = 8,
       openPagePolicy = true
     ),                                        // WARNING: Default controller params
     trackPerformance = true                   // WARNING: Performance tracking disabled by default
@@ -54,19 +52,19 @@ class SimMemorySimExecutor(
 
   // WARNING: Using default local configuration - adjust channel/rank/bank indices as needed
   val localConfig = LocalConfigurationParameters(
-    channelIndex = 0, // WARNING: Default to channel 0
-    rankIndex = 0,    // WARNING: Default to rank 0
-    bankIndex = 0     // WARNING: Default to bank 0
+    channelIndex = 0,
+    rankIndex = 0,
+    bankIndex = 0
   )
 
-  val memWrapper = Module(new SyncReadMemWrapper(depth, curMemConfiguration))
+  val memWrapper = Module(new SyncReadMemWrapper(depth, memParams, localConfig))
   // val memWrapper = Module(new MultiChannelSystem(memParams, localConfig))
 
   def addrToIndex(addr: UInt): UInt = addr >> log2Ceil(wordBytes) // beat index (word address)
 
   // ---- write side state (AW + W -> B) ----
   val sWIdle :: sWCollect :: sWWrite :: sWResp :: Nil = Enum(4)
-  val wState = RegInit(sWIdle)
+  val wState                                          = RegInit(sWIdle)
 
   val store_id    = RegInit(0.U(params.idBits.W))
   val store_addr  = RegInit(0.U(addrBits.W))
@@ -96,7 +94,7 @@ class SimMemorySimExecutor(
   // Default write outputs
   io.axi.aw.ready    := (wState === sWIdle)
   io.axi.w.ready     := (wState === sWCollect) && !mem_req_valid
-  io.axi.b.valid     := (wState === sWResp) && !mem_req_valid  // Wait for pending writes to complete
+  io.axi.b.valid     := (wState === sWResp) && !mem_req_valid // Wait for pending writes to complete
   io.axi.b.bits.id   := store_id
   io.axi.b.bits.resp := 0.U
 
@@ -109,12 +107,12 @@ class SimMemorySimExecutor(
   io.axi.r.bits.last := (read_count === 1.U)
 
   // Default memory interface - always initialized
-  memWrapper.io.in.valid := mem_req_valid
+  memWrapper.io.in.valid      := mem_req_valid
   memWrapper.io.in.bits.rd_en := mem_req_read
   memWrapper.io.in.bits.wr_en := mem_req_write
-  memWrapper.io.in.bits.addr := mem_req_addr
+  memWrapper.io.in.bits.addr  := mem_req_addr
   memWrapper.io.in.bits.wdata := mem_req_data
-  memWrapper.io.out.ready := true.B
+  memWrapper.io.out.ready     := true.B
 
   // Write state machine - unchanged logic, just set control signals
   switch(wState) {
@@ -132,9 +130,12 @@ class SimMemorySimExecutor(
         store_count := io.axi.aw.bits.len + 1.U
         store_size  := io.axi.aw.bits.size
         wState      := sWCollect
-        printf("[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n",
-          io.axi.aw.bits.id, io.axi.aw.bits.addr,
-          io.axi.aw.bits.len, io.axi.aw.bits.size
+        printf(
+          "[MemorySim] AW.fire id=%d addr=%x len=%d size=%d\n",
+          io.axi.aw.bits.id,
+          io.axi.aw.bits.addr,
+          io.axi.aw.bits.len,
+          io.axi.aw.bits.size
         )
       }
     }
@@ -142,7 +143,7 @@ class SimMemorySimExecutor(
     is(sWCollect) {
       when(io.axi.w.fire && !mem_req_valid) {
         val fullMask = ((BigInt(1) << strbBits) - 1).U(strbBits.W)
-        val newBeat = Mux(
+        val newBeat  = Mux(
           io.axi.w.bits.strb === fullMask,
           io.axi.w.bits.data, {
             val parts = (0 until strbBits).map { i =>
@@ -192,9 +193,9 @@ class SimMemorySimExecutor(
   }
 
   // AXI write channel signals updated accordingly
-  io.axi.aw.ready := (wState === sWIdle)
-  io.axi.w.ready  := (wState === sWCollect) && !mem_req_valid
-  io.axi.b.valid  := (wState === sWResp)
+  io.axi.aw.ready    := (wState === sWIdle)
+  io.axi.w.ready     := (wState === sWCollect) && !mem_req_valid
+  io.axi.b.valid     := (wState === sWResp)
   io.axi.b.bits.id   := store_id
   io.axi.b.bits.resp := 0.U
 
@@ -202,13 +203,13 @@ class SimMemorySimExecutor(
   switch(rState) {
     is(sRIdle) {
       // Clear all memory request signals when idle
-      mem_req_valid := false.B
-      mem_req_read := false.B
-      mem_req_write := false.B
-      mem_req_addr := 0.U
-      mem_req_data := 0.U
+      mem_req_valid   := false.B
+      mem_req_read    := false.B
+      mem_req_write   := false.B
+      mem_req_addr    := 0.U
+      mem_req_data    := 0.U
       read_data_valid := false.B
-      
+
       when(io.axi.ar.fire) {
         read_id    := io.axi.ar.bits.id
         read_addr  := io.axi.ar.bits.addr
@@ -221,7 +222,7 @@ class SimMemorySimExecutor(
         mem_req_write := false.B
         mem_req_addr  := io.axi.ar.bits.addr
         mem_req_data  := 0.U
-        
+
         rState := sRRead
         printf(
           "[MemorySim] AR.fire id=%d addr=%x len=%d size=%d\n",
@@ -236,21 +237,21 @@ class SimMemorySimExecutor(
       // Wait for memory system to accept the read request (input handshake)
       when(memWrapper.io.in.fire && mem_req_read) {
         mem_req_valid := false.B
-        mem_req_read := false.B
-        rState := sRWait
+        mem_req_read  := false.B
+        rState        := sRWait
       }
     }
     is(sRWait) {
       // Wait for memory response (output handshake) AND valid data
       when(memWrapper.io.out.fire && memWrapper.io.out.bits.out.rd_en) {
-        read_data := memWrapper.io.out.bits.out.data
+        read_data       := memWrapper.io.out.bits.out.data
         read_data_valid := true.B
       }
-      
+
       when(read_data_valid && io.axi.r.fire) {
-        read_count := read_count - 1.U
-        read_addr  := read_addr + (1.U << read_size)
-        read_data_valid := false.B  // Clear after sending
+        read_count      := read_count - 1.U
+        read_addr       := read_addr + (1.U << read_size)
+        read_data_valid := false.B // Clear after sending
 
         when(read_count > 1.U) {
           // Issue next memory read
@@ -259,7 +260,7 @@ class SimMemorySimExecutor(
           mem_req_write := false.B
           mem_req_addr  := read_addr + (1.U << read_size)
           mem_req_data  := 0.U
-          
+
           rState := sRRead
         }.otherwise {
           // Last beat completed
@@ -278,7 +279,7 @@ class SimMemorySimExecutor(
 
   // Handle memory responses - moved outside state machine
   when(memWrapper.io.out.fire && memWrapper.io.out.bits.out.rd_en) {
-    read_data := memWrapper.io.out.bits.out.data
+    read_data       := memWrapper.io.out.bits.out.data
     read_data_valid := true.B
   }
 

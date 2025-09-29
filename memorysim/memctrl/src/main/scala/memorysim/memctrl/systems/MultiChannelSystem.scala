@@ -10,16 +10,16 @@ class MultiChannelSystem(
   localConfig: LocalConfigurationParameters)
     extends Module {
   val io = IO(new MemorySystemIO(params.memConfiguration))
-  
+
   // Address decoder to extract channel index from request address
   val decoder = Module(new AddressDecoder(params.memConfiguration, params.bankConfiguration))
   decoder.io.addr := io.in.bits.addr
-  
+
   // Shared request ID counter
   val requestId = RegInit(1.U(params.memConfiguration.requestIDBits.W))
   val inputFire = io.in.valid && io.in.ready
   when(inputFire) { requestId := requestId + 1.U }
-  
+
   // Instantiate per-channel channel and controller
   val channels    = Seq.tabulate(params.memConfiguration.numberOfChannels) { i =>
     val ch = Module(
@@ -45,13 +45,13 @@ class MultiChannelSystem(
     )
     mc
   }
-  
+
   // Wire each channel to its controller
   for (i <- 0 until params.memConfiguration.numberOfChannels) {
     channels(i).io.memCmd <> controllers(i).io.memCmd
     controllers(i).io.phyResp <> channels(i).io.phyResp
   }
-  
+
   // Build per-channel ControllerRequest wires
   val ctrlReqVec = Seq.tabulate(params.memConfiguration.numberOfChannels) { i =>
     val w = Wire(Decoupled(new ControllerRequest(params.memConfiguration)))
@@ -65,7 +65,7 @@ class MultiChannelSystem(
     w.bits.request_id := requestId
     w
   }
-  
+
   // Connect to controllers and drive top-level ready
   io.in.ready := false.B
   for (i <- 0 until params.memConfiguration.numberOfChannels) {
@@ -75,7 +75,7 @@ class MultiChannelSystem(
       io.in.ready := ctrlReqVec(i).ready
     }
   }
-  
+
   // Arbiter to collect responses from controllers
   val respArb = Module(
     new Arbiter(new ControllerResponse(params.memConfiguration), params.memConfiguration.numberOfChannels)
@@ -83,17 +83,17 @@ class MultiChannelSystem(
   for (i <- 0 until params.memConfiguration.numberOfChannels) {
     respArb.io.in(i) <> controllers(i).io.out
   }
-  
+
   // Connect the output using the new SystemResponse structure
-  io.out.valid := respArb.io.out.valid
+  io.out.valid         := respArb.io.out.valid
   respArb.io.out.ready := io.out.ready
-  
+
   // Create SystemResponse bundle and connect fields
   val sysResp = Wire(new SystemResponse(params.memConfiguration))
-  sysResp.out := respArb.io.out.bits
+  sysResp.out                       := respArb.io.out.bits
   sysResp.next_available_request_id := requestId + 1.U
-  io.out.bits := sysResp
-  
+  io.out.bits                       := sysResp
+
   // Performance statistics per-channel (optional)
   if (params.trackPerformance) {
     for (i <- 0 until params.memConfiguration.numberOfChannels) {
@@ -103,14 +103,14 @@ class MultiChannelSystem(
       perfStats.io.in_fire  := inFireCh
       perfStats.io.in_bits  := ctrlReqVec(i).bits
       perfStats.io.out_fire := outFire
-      perfStats.io.out_bits := io.out.bits.out  // Updated to use .out field
+      perfStats.io.out_bits := io.out.bits.out // Updated to use .out field
     }
   }
-  
+
   // Expose internal signals (from channel 0, could be extended)
   io.rankState         := controllers(0).io.rankState
   io.reqQueueCount     := controllers(0).io.reqQueueCount
   io.respQueueCount    := controllers(0).io.respQueueCount
   io.fsmReqQueueCounts := controllers(0).io.fsmReqQueueCounts
   io.activeRanks       := controllers(0).io.rankState.count(_ =/= 0.U)
-} 
+}
