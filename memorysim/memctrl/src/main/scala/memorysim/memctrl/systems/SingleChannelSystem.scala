@@ -1,5 +1,4 @@
 package memorysim.memctrl
-
 import chisel3._
 import chisel3.util._
 
@@ -30,7 +29,6 @@ class SingleChannelSystem(
 
   // Connect the controller's memory command output to the channel's command input.
   channel.io.memCmd <> memory_controller.io.memCmd
-
   // Connect the channel's physical memory response back to the controller.
   memory_controller.io.phyResp <> channel.io.phyResp
 
@@ -49,18 +47,23 @@ class SingleChannelSystem(
   // Wire input to memory controller, appending request_id
   memory_controller.io.in.valid := io.in.valid
   io.in.ready                   := memory_controller.io.in.ready
-
   val ctrlReq = Wire(new ControllerRequest(params.memConfiguration))
-  ctrlReq.rd_en      := io.in.bits.rd_en
-  ctrlReq.wr_en      := io.in.bits.wr_en
-  ctrlReq.addr       := io.in.bits.addr
-  ctrlReq.wdata      := io.in.bits.wdata
-  ctrlReq.request_id := requestId
-
+  ctrlReq.rd_en                := io.in.bits.rd_en
+  ctrlReq.wr_en                := io.in.bits.wr_en
+  ctrlReq.addr                 := io.in.bits.addr
+  ctrlReq.wdata                := io.in.bits.wdata
+  ctrlReq.request_id           := requestId
   memory_controller.io.in.bits := ctrlReq
 
-  // Connect the user interface to the memory controller.
-  io.out <> memory_controller.io.out
+  // Connect the output using the new SystemResponse structure
+  io.out.valid                   := memory_controller.io.out.valid
+  memory_controller.io.out.ready := io.out.ready
+
+  // Create SystemResponse bundle and connect fields
+  val sysResp = Wire(new SystemResponse(params.memConfiguration))
+  sysResp.out                       := memory_controller.io.out.bits
+  sysResp.next_available_request_id := requestId + 1.U
+  io.out.bits                       := sysResp
 
   // If performance tracking is enabled:
   if (params.trackPerformance) {
@@ -69,11 +72,10 @@ class SingleChannelSystem(
     perfStats.io.in_fire  := inputFire
     perfStats.io.in_bits  := ctrlReq
     perfStats.io.out_fire := outputFire
-    perfStats.io.out_bits := io.out.bits
+    perfStats.io.out_bits := io.out.bits.out // Updated to use .out field
   }
 
-  io.rankState := memory_controller.io.rankState
-
+  io.rankState         := memory_controller.io.rankState
   // Connect internal queue counts
   io.reqQueueCount     := memory_controller.io.reqQueueCount
   io.respQueueCount    := memory_controller.io.respQueueCount
@@ -81,7 +83,6 @@ class SingleChannelSystem(
 
   // Calculate the number of active ranks
   val activeRanksCount = memory_controller.io.rankState.count(_ =/= 0.U)
-
   // Expose the number of active ranks to the top-level I/O
   io.activeRanks := activeRanksCount
 }

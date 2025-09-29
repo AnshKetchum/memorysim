@@ -85,7 +85,7 @@ class MemorySystemComplexSpec extends AnyFreeSpec with Matchers {
       val respCount = dut.io.respQueueCount.peek().litValue.toInt
       assert(respCount == writesToIssue, s"Expected $writesToIssue responses, but found $respCount")
 
-      // ⬇️ DRAIN LOOP: verify address + data
+      // ⬇️ DRAIN LOOP: verify address + data (updated for SystemResponse)
       val expectedSet = scala.collection.mutable.Set[(BigInt, BigInt)]() ++ expected
       val receivedSet = scala.collection.mutable.Set[(BigInt, BigInt)]()
 
@@ -94,11 +94,16 @@ class MemorySystemComplexSpec extends AnyFreeSpec with Matchers {
         if (dut.io.out.valid.peek().litToBoolean) {
           dut.io.out.ready.poke(true.B)
 
-          val raddr = dut.io.out.bits.addr.peek().litValue
-          val rdata = dut.io.out.bits.data.peek().litValue
+          // Access the controller response through the .out field
+          val raddr = dut.io.out.bits.out.addr.peek().litValue
+          val rdata = dut.io.out.bits.out.data.peek().litValue
 
           receivedSet += ((raddr, rdata))
           drained += 1
+
+          // Optionally verify that next_available_request_id is being provided
+          val nextId = dut.io.out.bits.next_available_request_id.peek().litValue
+          println(f"[RESP] addr=0x${raddr}%08X, data=0x${rdata}%08X, next_id=$nextId")
         } else {
           dut.io.out.ready.poke(false.B)
         }
@@ -138,8 +143,9 @@ class MemorySystemComplexSpec extends AnyFreeSpec with Matchers {
         if (dut.io.out.valid.peek().litToBoolean) {
           dut.io.out.ready.poke(true.B)
 
-          val raddr = dut.io.out.bits.addr.peek().litValue
-          val rdata = dut.io.out.bits.data.peek().litValue
+          // Access the controller response through the .out field
+          val raddr = dut.io.out.bits.out.addr.peek().litValue
+          val rdata = dut.io.out.bits.out.data.peek().litValue
 
           receivedReadSet += ((raddr, rdata))
         } else {

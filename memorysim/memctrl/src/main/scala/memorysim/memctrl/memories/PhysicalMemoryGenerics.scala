@@ -156,7 +156,7 @@ case class MemoryConfigurationParameters(
   numberOfChannels:     Int = 1,
   numberOfRanks:        Int = 2,
   numberOfBanks:        Int = 8,
-  memoryQueueSize:      Int = 256)
+  memoryQueueSize:      Int = 8)
 
 case class LocalConfigurationParameters(
   channelIndex: Int = 0,

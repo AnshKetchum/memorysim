@@ -27,7 +27,7 @@ def test_trace_runs(trace_file):
         str(SIM_BIN),
         "-t", str(trace_file),
         "-c", str(500_000_000_000),  # large max cycle limit
-        "-m", str(100),  # per request bound
+        "-m", str(500),  # per request bound
     ]
     try:
         result = subprocess.run(

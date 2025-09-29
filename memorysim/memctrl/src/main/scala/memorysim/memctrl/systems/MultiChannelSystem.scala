@@ -1,5 +1,4 @@
 package memorysim.memctrl
-
 import chisel3._
 import chisel3.util._
 
@@ -77,14 +76,23 @@ class MultiChannelSystem(
     }
   }
 
-  // Arbiter to collect responses
+  // Arbiter to collect responses from controllers
   val respArb = Module(
     new Arbiter(new ControllerResponse(params.memConfiguration), params.memConfiguration.numberOfChannels)
   )
   for (i <- 0 until params.memConfiguration.numberOfChannels) {
     respArb.io.in(i) <> controllers(i).io.out
   }
-  io.out <> respArb.io.out
+
+  // Connect the output using the new SystemResponse structure
+  io.out.valid         := respArb.io.out.valid
+  respArb.io.out.ready := io.out.ready
+
+  // Create SystemResponse bundle and connect fields
+  val sysResp = Wire(new SystemResponse(params.memConfiguration))
+  sysResp.out                       := respArb.io.out.bits
+  sysResp.next_available_request_id := requestId + 1.U
+  io.out.bits                       := sysResp
 
   // Performance statistics per-channel (optional)
   if (params.trackPerformance) {
@@ -95,7 +103,7 @@ class MultiChannelSystem(
       perfStats.io.in_fire  := inFireCh
       perfStats.io.in_bits  := ctrlReqVec(i).bits
       perfStats.io.out_fire := outFire
-      perfStats.io.out_bits := io.out.bits
+      perfStats.io.out_bits := io.out.bits.out // Updated to use .out field
     }
   }
 
