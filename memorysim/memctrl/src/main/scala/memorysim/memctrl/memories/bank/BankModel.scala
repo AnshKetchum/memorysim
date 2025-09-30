@@ -3,6 +3,7 @@ package memorysim.memctrl
 import chisel3._
 import chisel3.util._
 import chisel3.util.log2Ceil
+import chisel3.util.experimental.loadMemoryFromFile
 
 /** DRAM bank FSM that defers timing to an external TimingEngine. Accepts a `waitCycles` input per command and enforces
   * it.
@@ -39,6 +40,7 @@ class DRAMBankWithWait(
 
   // underlying memory array
   val mem = Mem(params.addressSpaceSize, UInt(memConfig.dataWidth.W))
+  loadMemoryFromFile(mem, "/workspace/chipyard/generators/memorysim/zero_init.hex")
 
   // decode bits from pending
   val cs_p  = !pending.cs

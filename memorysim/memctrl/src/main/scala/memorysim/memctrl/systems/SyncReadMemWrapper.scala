@@ -11,7 +11,9 @@ import chisel3.util._
 class SyncReadMemWrapper(
   depth:       Int,
   memParams:   SingleChannelMemoryConfigurationParams,
-  localConfig: LocalConfigurationParameters = LocalConfigurationParameters())
+  localConfig: LocalConfigurationParameters = LocalConfigurationParameters(), 
+  readDelay: Int = 10, 
+  writeDelay: Int = 5)
     extends Module {
 
   val params           = memParams.memConfiguration
