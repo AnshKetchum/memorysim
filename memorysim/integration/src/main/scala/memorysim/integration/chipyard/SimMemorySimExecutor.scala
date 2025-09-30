@@ -54,10 +54,11 @@ class SimMemorySimExecutor(
     channelIndex = 0,
     rankIndex = 0,
     bankIndex = 0,
-    verbose = true
+    verbose = false
   )
 
-  val memWrapper = Module(new SyncReadMemWrapper(depth, memParams, localConfig))
+  // val memWrapper = Module(new SyncReadMemWrapper(depth, memParams, localConfig))
+  val memWrapper = Module(new MultiChannelSystem(memParams, localConfig))
 
   // Arbiter instance
   val arb = Module(new AXIRequestArbiter(params))
