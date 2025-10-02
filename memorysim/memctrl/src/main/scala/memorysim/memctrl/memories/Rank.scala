@@ -35,7 +35,7 @@ class Rank(
   val banksWithTiming = Seq.tabulate(params.numberOfBanks) { idx =>
     val cfg     = localConfig.copy(bankIndex = idx)
     val bank    = Module(new DRAMBankWithWait(bankParams, params, cfg, trackPerformance))
-    val timer   = Module(new SingleCycleTimingEngine(bankParams, params, cfg))
+    val timer   = Module(new TimingEngine(bankParams, params, cfg))
     val deqPort = cmdDemux.io.deq(idx)
 
     // Create BankMemoryCommand with metadata

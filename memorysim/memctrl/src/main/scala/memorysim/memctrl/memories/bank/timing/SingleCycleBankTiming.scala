@@ -10,7 +10,7 @@ class SingleCycleTimingEngine(
     extends Module {
   val io = IO(new Bundle {
     val cmd        = Flipped(Decoupled(new BankMemoryCommand(memConfig)))
-    val waitCycles = Output(UInt(32.W))
+    val waitCycles = Output(UInt(memConfig.globalCycleCountBits.W))
   })
 
   // Prev/Cur ops (4-bit to match DRAMOp.* widths)
