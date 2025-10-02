@@ -45,19 +45,14 @@ class DRAMBankWithWait(
   val mem = Mem(params.addressSpaceSize, UInt(memConfig.dataWidth.W))
   // loadMemoryFromFile(mem, "/workspace/chipyard/generators/memorysim/zero_init.hex")
 
-  // decode bits from pending
-  val cs_p  = !pending.cs
-  val ras_p = !pending.ras
-  val cas_p = !pending.cas
-  val we_p  = !pending.we
-
-  val doActivate  = cs_p && ras_p && !cas_p && !we_p
-  val doRead      = cs_p && !ras_p && cas_p && !we_p
-  val doWrite     = cs_p && !ras_p && cas_p && we_p
-  val doPrecharge = cs_p && ras_p && !cas_p && we_p
-  val doRefresh   = cs_p && ras_p && cas_p && !we_p
-  val doSrefEnter = cs_p && ras_p && cas_p && we_p
-  val doSrefExit  = cs_p && !ras_p && !cas_p && !we_p
+  // decode operation from pending.op
+  val doActivate  = pending.op === DRAMOp.ACTIVATE
+  val doRead      = pending.op === DRAMOp.READ
+  val doWrite     = pending.op === DRAMOp.WRITE
+  val doPrecharge = pending.op === DRAMOp.PRECHARGE
+  val doRefresh   = pending.op === DRAMOp.REFRESH
+  val doSrefEnter = pending.op === DRAMOp.SREF_ENTER
+  val doSrefExit  = pending.op === DRAMOp.SREF_EXIT
 
   // instantiate AddressDecoder for row/column
   private val addrDecoder = Module(new AddressDecoder(memConfig, params))

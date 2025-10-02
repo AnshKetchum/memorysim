@@ -62,17 +62,23 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
           println("IN DRAM FLOW SPEC")
           sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = true)
           expectResp(dut, base, 0.U)
+
           sendCmd(dut, base, 0.U, cs = false, ras = true, cas = false, we = true)
           expectResp(dut, base, 0.U)
+
           sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = false)
           expectResp(dut, base, 0.U)
+
           // write pat
           sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = true)
           expectResp(dut, base, 0.U)
+
           sendCmd(dut, base, pat, cs = false, ras = true, cas = false, we = false)
           expectResp(dut, base, pat)
+
           sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = false)
           expectResp(dut, base, 0.U)
+
           // refresh
           sendCmd(dut, base, 0.U, cs = false, ras = false, cas = false, we = true)
           expectResp(dut, base, 0.U)
