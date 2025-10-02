@@ -1,4 +1,5 @@
 module BankPhysicalMemoryRequestPerformanceStatistics #(
+    parameter int CHANNEL,
     parameter int RANK,
     parameter int BANK,
     parameter int ADDRESS_WIDTH,
@@ -27,7 +28,7 @@ module BankPhysicalMemoryRequestPerformanceStatistics #(
     reg [1023:0] filename;
     
     initial begin
-        $sformat(filename, "bank_req_queue_stats_rank%0d_bank%0d.csv", RANK, BANK);
+        $sformat(filename, "bank_req_queue_stats_channel%0d_rank%0d_bank%0d.csv", CHANNEL, RANK, BANK);
         file = $fopen(filename, "w");
         $fwrite(file, "RequestID,InternalReqID,ChannelID,RankID,BankID,SchedulerID,Address,Type,Cycle\n");
     end

@@ -1,4 +1,5 @@
 module BankSchedulerPerformanceStatisticsOutput #(
+    parameter int CHANNEL,
     parameter int RANK,
     parameter int BANK,
     parameter int ADDRESS_WIDTH,
@@ -37,7 +38,7 @@ module BankSchedulerPerformanceStatisticsOutput #(
     reg [2:0] reqType; // holds 0..7 per table above
 
     initial begin
-        $sformat(filename, "output_response_stats_scheduler_rank%0d_bank%0d.csv", RANK, BANK);
+        $sformat(filename, "output_response_stats_scheduler_channel%0d_rank%0d_bank%0d.csv", CHANNEL, RANK, BANK);
         file = $fopen(filename, "w");
         // Note header includes TypeID (numeric) to match encoded values above
         $fwrite(file, "RequestID,Address,Data,TypeID,Cycle\n");
