@@ -5,15 +5,14 @@ module BankSchedulerPhysicalMemoryRequestPerformanceStatistics #(
     parameter int ADDRESS_WIDTH,
     parameter int DATA_WIDTH,
     parameter int GLOBAL_CYCLE_BITS,
-    parameter int REQUEST_ID_BITS,
-    parameter int OP_WIDTH = 4
+    parameter int REQUEST_ID_BITS
 )(
     input  wire                          clk,
     input  wire                          reset,
     input  wire                          req_fire,
     input  wire [ADDRESS_WIDTH-1:0]      addr,
     input  wire [DATA_WIDTH-1:0]         data,
-    input  wire [OP_WIDTH-1:0]           op,              // DRAMOp enum encoding
+    input  wire [DATA_WIDTH-1:0]           op,              // DRAMOp enum encoding
     input  wire [GLOBAL_CYCLE_BITS-1:0]  globalCycle,
     input  wire [REQUEST_ID_BITS-1:0]    request_id,
     input  wire [REQUEST_ID_BITS-1:0]    internal_req_id,
@@ -41,13 +40,15 @@ module BankSchedulerPhysicalMemoryRequestPerformanceStatistics #(
         if (!reset && req_fire) begin
             // Map op code to string name
             case (op)
-                0:  opString = "REFRESH";
-                1:  opString = "PRECHARGE";
-                2:  opString = "ACTIVATE";
-                3:  opString = "READ";
-                4:  opString = "WRITE";
-                5:  opString = "SELFREF_ENTER";
-                6:  opString = "SELFREF_EXIT";
+                0:  opString = "ACTIVATE";
+                1:  opString = "READ";
+                2:  opString = "WRITE";
+                3:  opString = "READ_PRECHARGE";
+                4:  opString = "WRITE_PRECHARGE";
+                5:  opString = "PRECHARGE";
+                6:  opString = "REFRESH";
+                7:  opString = "SELFREF_ENTER";
+                8:  opString = "SELFREF_EXIT";
                 default: opString = "UNKNOWN";
             endcase
 

@@ -2,7 +2,7 @@ module CommandQueuePerformanceStatisticsInput #(
     parameter int ADDRESS_WIDTH,
     parameter int DATA_WIDTH,
     parameter int GLOBAL_CYCLE_BITS,
-    parameter int REQUEST_ID_BITS,
+    parameter int REQUEST_ID_BITS
 )(
     input  wire clk,
     input  wire reset,
@@ -30,13 +30,15 @@ module CommandQueuePerformanceStatisticsInput #(
         if (!reset && req_fire) begin
             // Map op enum to human-readable string
             case (op)
-                0:  opString = "REFRESH";
-                1:  opString = "PRECHARGE";
-                2:  opString = "ACTIVATE";
-                3:  opString = "READ";
-                4:  opString = "WRITE";
-                5:  opString = "SELF REFRESH ENTER";
-                6:  opString = "SELF REFRESH EXIT";
+                0:  opString = "ACTIVATE";
+                1:  opString = "READ";
+                2:  opString = "WRITE";
+                3:  opString = "READ_PRECHARGE";
+                4:  opString = "WRITE_PRECHARGE";
+                5:  opString = "PRECHARGE";
+                6:  opString = "REFRESH";
+                7:  opString = "SELFREF_ENTER";
+                8:  opString = "SELFREF_EXIT";
                 default: opString = "UNKNOWN";
             endcase
 
