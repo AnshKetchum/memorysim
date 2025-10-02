@@ -1,9 +1,3 @@
-/** Verification Spec Target:
-  *
-  * \- Verify, at the functional (input / output) level that Physical memory modules work as desired (i.e, we can issue
-  * reads and writes) \- Verify that the FSM can drive ANY and ALL Physical DRAM Memory Instances
-  */
-
 package memorysim.memctrl
 
 import chisel3._
@@ -17,28 +11,28 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
   // -----------------------
   // DRAM Flow Test Helpers
   // -----------------------
+
   private def sendCmd(
     dut:  PhysicalMemoryModuleBase,
     addr: UInt,
     data: UInt,
-    cs:   Boolean,
-    ras:  Boolean,
-    cas:  Boolean,
-    we:   Boolean
+    op:   UInt
   ): Unit = {
     dut.io.memCmd.bits.addr.poke(addr)
     dut.io.memCmd.bits.data.poke(data)
-    dut.io.memCmd.bits.cs.poke(cs.B)
-    dut.io.memCmd.bits.ras.poke(ras.B)
-    dut.io.memCmd.bits.cas.poke(cas.B)
-    dut.io.memCmd.bits.we.poke(we.B)
+    dut.io.memCmd.bits.op.poke(op)
     dut.io.memCmd.valid.poke(true.B)
-    while (!dut.io.memCmd.ready.peek().litToBoolean) dut.clock.step()
+    while (!dut.io.memCmd.ready.peek().litToBoolean) { dut.clock.step() }
     dut.clock.step()
     dut.io.memCmd.valid.poke(false.B)
   }
 
-  private def expectResp(dut: PhysicalMemoryModuleBase, expAddr: UInt, expData: UInt, maxCycles: Int = 500): Unit = {
+  private def expectResp(
+    dut: PhysicalMemoryModuleBase,
+    expAddr: UInt,
+    expData: UInt,
+    maxCycles: Int = 500
+  ): Unit = {
     var cycles = 0
     while (!dut.io.phyResp.valid.peek().litToBoolean && cycles < maxCycles) {
       dut.clock.step(); cycles += 1
@@ -56,31 +50,38 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
         simulate(instantiate) { dut =>
           dut.reset.poke(true.B); dut.clock.step(); dut.reset.poke(false.B); dut.clock.step()
           dut.io.phyResp.ready.poke(true.B)
-          val base = 0x10.U; val pat = "hABCD".U
-          // init read
+
+          val base = 0x10.U
+          val pat  = "hABCD".U
 
           println("IN DRAM FLOW SPEC")
-          sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = true)
+
+          // init ACTIVATE
+          sendCmd(dut, base, 0.U, DRAMOp.ACTIVATE)
           expectResp(dut, base, 0.U)
 
-          sendCmd(dut, base, 0.U, cs = false, ras = true, cas = false, we = true)
+          // READ (expect default 0)
+          sendCmd(dut, base, 0.U, DRAMOp.READ)
           expectResp(dut, base, 0.U)
 
-          sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = false)
+          // PRECHARGE
+          sendCmd(dut, base, 0.U, DRAMOp.PRECHARGE)
           expectResp(dut, base, 0.U)
 
-          // write pat
-          sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = true)
+          // ACTIVATE before WRITE
+          sendCmd(dut, base, 0.U, DRAMOp.ACTIVATE)
           expectResp(dut, base, 0.U)
 
-          sendCmd(dut, base, pat, cs = false, ras = true, cas = false, we = false)
-          expectResp(dut, base, pat)
-
-          sendCmd(dut, base, 0.U, cs = false, ras = false, cas = true, we = false)
+          // WRITE pat
+          sendCmd(dut, base, pat, DRAMOp.WRITE)
           expectResp(dut, base, 0.U)
 
-          // refresh
-          sendCmd(dut, base, 0.U, cs = false, ras = false, cas = false, we = true)
+          // PRECHARGE again
+          sendCmd(dut, base, 0.U, DRAMOp.PRECHARGE)
+          expectResp(dut, base, 0.U)
+
+          // REFRESH
+          sendCmd(dut, base, 0.U, DRAMOp.REFRESH)
           expectResp(dut, base, 0.U)
         }
       }
@@ -98,7 +99,7 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
     bankIndex = 0
   )
 
-  println("[PhysicalMemorySpec] In here. ")
+  println("[PhysicalMemorySpec] In here.")
   dramFlowSpec("Channel", new Channel(memParams, bankParams, localConfig))
   dramFlowSpec("Rank", new Rank(memParams, bankParams, localConfig))
 }

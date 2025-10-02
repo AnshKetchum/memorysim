@@ -102,7 +102,7 @@ class ClosedPageBankScheduler(
 
   // Response data wire
   val responseDataWire = Wire(UInt(memoryConfig.dataWidth.W))
-  responseDataWire := Mux(reqIsRead, responseDataReg, 0.U)
+  responseDataWire := responseDataReg
 
   val respReg = Wire(new ControllerResponse(memoryConfig))
   respReg.addr       := reqAddrReg
