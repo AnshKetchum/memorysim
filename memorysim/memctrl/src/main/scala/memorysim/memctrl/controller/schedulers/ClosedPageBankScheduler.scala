@@ -35,11 +35,17 @@ class ClosedPageBankScheduler(
   val refreshCounter = RegInit(1.U(memoryConfig.requestIDBits.W))
 
   // --------------------------------------------------
+  // Internal request ID constants for different memory commands
+  val INTERNAL_ID_ACTIVATE = 1.U(memoryConfig.requestIDBits.W)
+  val INTERNAL_ID_READ     = 2.U(memoryConfig.requestIDBits.W)
+  val INTERNAL_ID_WRITE    = 3.U(memoryConfig.requestIDBits.W)
+
+  // --------------------------------------------------
   // Helper function to create RequestPacket
-  def createRequestPacket(extReqId: UInt, isInternal: Bool, internalId: UInt): RequestPacket = {
+  def createRequestPacket(extReqId: UInt, internalId: UInt): RequestPacket = {
     val reqPacket = Wire(new RequestPacket(memoryConfig))
-    reqPacket.request_id           := Mux(isInternal, 0.U, extReqId)
-    reqPacket.internal_req_id      := Mux(isInternal, internalId, 0.U)
+    reqPacket.request_id           := extReqId
+    reqPacket.internal_req_id      := internalId
     reqPacket.channel_id           := localConfiguration.channelIndex.U
     reqPacket.rank_id              := localConfiguration.rankIndex.U
     reqPacket.bank_id              := localConfiguration.bankIndex.U
@@ -49,19 +55,27 @@ class ClosedPageBankScheduler(
 
   // --------------------------------------------------
   // Latch incoming request fields
-  val reqReg       = Reg(new ControllerRequest(memoryConfig))
-  val reqIsRead    = RegInit(false.B)
-  val reqIsWrite   = RegInit(false.B)
-  val reqAddrReg   = RegInit(0.U(32.W))
-  val reqWdataReg  = RegInit(0.U(32.W))
-  val reqPacketReg = Reg(new RequestPacket(memoryConfig))
+  val reqReg      = Reg(new ControllerRequest(memoryConfig))
+  val reqIsRead   = RegInit(false.B)
+  val reqIsWrite  = RegInit(false.B)
+  val reqAddrReg  = RegInit(0.U(32.W))
+  val reqWdataReg = RegInit(0.U(32.W))
+  val reqIdReg    = RegInit(0.U(memoryConfig.requestIDBits.W))
+
+  // Request packets for activate, read/write, and refresh with distinct internal IDs
+  val activateReqPacket  = Reg(new RequestPacket(memoryConfig))
+  val readWriteReqPacket = Reg(new RequestPacket(memoryConfig))
+  val refreshReqPacket   = Reg(new RequestPacket(memoryConfig))
+
+  // Response data register
+  val responseDataReg = RegInit(0.U(32.W))
 
   // --------------------------------------------------
-  // FSM states - simple 4-state cycle
-  val sIdle :: sActivate :: sReadWrite :: sRefresh :: Nil = Enum(4)
-  val state                                               = RegInit(sIdle)
-  val prevState                                           = RegNext(state)
-  val sentCmd                                             = RegInit(false.B)
+  // FSM states - 5-state cycle with separate response state
+  val sIdle :: sActivate :: sReadWrite :: sResponse :: sRefresh :: Nil = Enum(5)
+  val state                                                            = RegInit(sIdle)
+  val prevState                                                        = RegNext(state)
+  val sentCmd                                                          = RegInit(false.B)
   when(prevState =/= state) { sentCmd := false.B }
   io.stateOut := state
 
@@ -69,8 +83,6 @@ class ClosedPageBankScheduler(
   // Refresh address generator
   private val reqIDGen = Module(new RefreshAddressGenerator(memoryConfig, params, localConfiguration))
   val refreshAddr      = reqIDGen.io.refreshAddr
-  val refreshReqPacket = Wire(new RequestPacket(memoryConfig))
-  refreshReqPacket := createRequestPacket(0.U, true.B, refreshCounter)
 
   // --------------------------------------------------
   // Default I/O
@@ -84,16 +96,16 @@ class ClosedPageBankScheduler(
   cmdReg.ras        := false.B
   cmdReg.cas        := false.B
   cmdReg.we         := false.B
-  cmdReg.request_id := reqPacketReg
+  cmdReg.request_id := activateReqPacket // Default, will be overridden
   io.cmdOut.bits    := cmdReg
 
   // Issue commands when in command states and haven't sent yet
   val issueStates = Seq(sActivate, sReadWrite, sRefresh)
   io.cmdOut.valid := issueStates.map(_ === state).reduce(_ || _) && !sentCmd && !cmdReg.cs
 
-  // Response data wire - computed based on current state and data availability
+  // Response data wire
   val responseDataWire = Wire(UInt(32.W))
-  responseDataWire := Mux(reqIsRead, io.phyResp.bits.data, reqWdataReg)
+  responseDataWire := Mux(reqIsRead, responseDataReg, 0.U)
 
   val respReg = Wire(new ControllerResponse(memoryConfig))
   respReg.addr       := reqAddrReg
@@ -101,7 +113,7 @@ class ClosedPageBankScheduler(
   respReg.rd_en      := reqIsRead
   respReg.wdata      := reqWdataReg
   respReg.data       := responseDataWire
-  respReg.request_id := reqPacketReg.request_id
+  respReg.request_id := reqIdReg
   io.resp.bits       := respReg
   io.resp.valid      := false.B // Will be set in FSM
 
@@ -116,17 +128,25 @@ class ClosedPageBankScheduler(
   }
 
   // --------------------------------------------------
-  // Simple FSM: Accept request → Activate → Read/Write → Refresh → Repeat
+  // Simple FSM: Accept request → Activate → Read/Write → Response → Refresh → Repeat
   switch(state) {
     is(sIdle) {
       when(io.req.fire) {
         // Latch the request
-        reqReg       := io.req.bits
-        reqIsRead    := io.req.bits.rd_en
-        reqIsWrite   := io.req.bits.wr_en
-        reqAddrReg   := io.req.bits.addr
-        reqWdataReg  := io.req.bits.wdata
-        reqPacketReg := createRequestPacket(io.req.bits.request_id, false.B, 0.U)
+        reqReg      := io.req.bits
+        reqIsRead   := io.req.bits.rd_en
+        reqIsWrite  := io.req.bits.wr_en
+        reqAddrReg  := io.req.bits.addr
+        reqWdataReg := io.req.bits.wdata
+        reqIdReg    := io.req.bits.request_id
+
+        // Create request packets with SAME request_id but DIFFERENT internal_req_id
+        activateReqPacket  := createRequestPacket(io.req.bits.request_id, INTERNAL_ID_ACTIVATE)
+        readWriteReqPacket := createRequestPacket(
+          io.req.bits.request_id,
+          Mux(io.req.bits.rd_en, INTERNAL_ID_READ, INTERNAL_ID_WRITE)
+        )
+        refreshReqPacket   := createRequestPacket(0.U, refreshCounter)
 
         // Always go to activate
         state := sActivate
@@ -135,16 +155,17 @@ class ClosedPageBankScheduler(
 
     is(sActivate) {
       when(!sentCmd) {
-        // Send ACTIVATE command
-        cmdReg.cs  := false.B
-        cmdReg.ras := false.B
-        cmdReg.cas := true.B
-        cmdReg.we  := true.B
+        // Send ACTIVATE command with internal_req_id = 1
+        cmdReg.cs         := false.B
+        cmdReg.ras        := false.B
+        cmdReg.cas        := true.B
+        cmdReg.we         := true.B
+        cmdReg.request_id := activateReqPacket
       }
       when(io.cmdOut.fire) {
         sentCmd := true.B
       }
-      when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, reqPacketReg)) {
+      when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, activateReqPacket)) {
         sentCmd := false.B
         state   := sReadWrite
       }
@@ -152,38 +173,42 @@ class ClosedPageBankScheduler(
 
     is(sReadWrite) {
       when(!sentCmd) {
-        // Send READ or WRITE command
-        cmdReg.cs  := false.B
-        cmdReg.ras := true.B
-        cmdReg.cas := false.B
-        cmdReg.we  := Mux(reqIsRead, true.B, false.B)
+        // Send READ or WRITE command with internal_req_id = 2 or 3
+        cmdReg.cs         := false.B
+        cmdReg.ras        := true.B
+        cmdReg.cas        := false.B
+        cmdReg.we         := Mux(reqIsRead, true.B, false.B)
+        cmdReg.request_id := readWriteReqPacket
       }
       when(io.cmdOut.fire) {
         sentCmd := true.B
       }
-      when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, reqPacketReg)) {
+      when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, readWriteReqPacket)) {
         sentCmd := false.B
 
-        // Send response and go to refresh
-        io.resp.valid := true.B
-        when(io.resp.fire) {
-          if (localConfiguration.verbose) {
-            printf(
-              "Sending back data 0%x read - 0%x write - 0%x\n",
-              responseDataWire,
-              io.phyResp.bits.data,
-              reqWdataReg
-            )
-          }
-          state          := sRefresh
-          refreshCounter := refreshCounter + 1.U
+        // Latch response data if this was a read
+        when(reqIsRead) {
+          responseDataReg := io.phyResp.bits.data
         }
+
+        state := sResponse
+      }
+    }
+
+    is(sResponse) {
+      // Send response back to requester
+      io.resp.valid := true.B
+      when(io.resp.fire) {
+        if (localConfiguration.verbose) {
+          printf("Sending back data 0%x read - 0%x write - 0%x\n", responseDataWire, responseDataReg, reqWdataReg)
+        }
+        state := sRefresh
       }
     }
 
     is(sRefresh) {
       when(!sentCmd) {
-        // Send REFRESH command
+        // Send REFRESH command with internal_req_id = refreshCounter
         cmdReg.cs         := false.B
         cmdReg.ras        := false.B
         cmdReg.cas        := false.B
@@ -195,9 +220,10 @@ class ClosedPageBankScheduler(
         sentCmd := true.B
       }
       when(sentCmd && io.phyResp.fire && requestPacketMatch(io.phyResp.bits.request_id, refreshReqPacket)) {
-        lastRefresh := cycleCounter
-        sentCmd     := false.B
-        state       := sIdle
+        lastRefresh    := cycleCounter
+        sentCmd        := false.B
+        refreshCounter := refreshCounter + 1.U
+        state          := sIdle
       }
     }
   }
@@ -219,8 +245,8 @@ class ClosedPageBankScheduler(
   // --------------------------------------------------
   // Accept responses for any command we're waiting for
   io.phyResp.ready := sentCmd && (
-    (state === sActivate && requestPacketMatch(io.phyResp.bits.request_id, reqPacketReg)) ||
-      (state === sReadWrite && requestPacketMatch(io.phyResp.bits.request_id, reqPacketReg)) ||
+    (state === sActivate && requestPacketMatch(io.phyResp.bits.request_id, activateReqPacket)) ||
+      (state === sReadWrite && requestPacketMatch(io.phyResp.bits.request_id, readWriteReqPacket)) ||
       (state === sRefresh && requestPacketMatch(io.phyResp.bits.request_id, refreshReqPacket))
   ) &&
     (respDec.io.rankIndex === localConfiguration.rankIndex.U) &&

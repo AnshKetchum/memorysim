@@ -38,8 +38,8 @@ class SimMemorySimExecutor(
       addressWidth = addrBits,
       dataWidth = dataBits,
       numberOfChannels = 1,
-      numberOfRanks = 2,
-      numberOfBanks = 8,
+      numberOfRanks = 1,
+      numberOfBanks = 1,
       memoryQueueSize = 8
     ),
     bankConfiguration = DRAMBankParameters(),
@@ -318,16 +318,18 @@ class SimMemorySimExecutor(
   }
 
   // Debug prints
-  printf(
-    "Bridge rState=%d wState=%d transActive=%d isRead=%d mem.in.vld=%d mem.in.rdy=%d mem.out.vld=%d mem.out.rdy=%d\n",
-    rState,
-    wState,
-    transactionActive,
-    currentIsRead,
-    memWrapper.io.in.valid,
-    memWrapper.io.in.ready,
-    memWrapper.io.out.valid,
-    memWrapper.io.out.ready
-  )
+  if (localConfig.verbose) {
+    printf(
+      "Bridge rState=%d wState=%d transActive=%d isRead=%d mem.in.vld=%d mem.in.rdy=%d mem.out.vld=%d mem.out.rdy=%d\n",
+      rState,
+      wState,
+      transactionActive,
+      currentIsRead,
+      memWrapper.io.in.valid,
+      memWrapper.io.in.ready,
+      memWrapper.io.out.valid,
+      memWrapper.io.out.ready
+    )
+  }
 
 }

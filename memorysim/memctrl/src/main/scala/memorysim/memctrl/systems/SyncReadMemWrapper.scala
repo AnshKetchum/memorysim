@@ -65,8 +65,6 @@ class SyncReadMemWrapper(
     reqIsWrite   := io.in.bits.wr_en
     reqWriteData := io.in.bits.wdata
 
-    currentRequestId := currentRequestId + 1.U
-
     when(io.in.bits.rd_en) {
       state        := sReadDelay
       delayCounter := readDelay.U
@@ -74,6 +72,8 @@ class SyncReadMemWrapper(
       state        := sWriteDelay
       delayCounter := writeDelay.U
     }
+
+    currentRequestId := currentRequestId + 1.U
   }
 
   // Default: no memory read
@@ -150,7 +150,7 @@ class SyncReadMemWrapper(
     controllerReq.wr_en      := io.in.bits.wr_en
     controllerReq.addr       := io.in.bits.addr
     controllerReq.wdata      := io.in.bits.wdata
-    controllerReq.request_id := reqRequestId
+    controllerReq.request_id := currentRequestId
 
     perfStats.io.in_fire  := io.in.fire
     perfStats.io.in_bits  := controllerReq

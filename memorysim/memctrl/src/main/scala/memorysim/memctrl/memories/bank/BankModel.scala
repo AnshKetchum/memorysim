@@ -31,6 +31,9 @@ class DRAMBankWithWait(
   // latch incoming command
   val pending = Reg(new BankMemoryCommand(memConfig))
 
+  // latch response data
+  val respData = RegInit(0.U(memConfig.dataWidth.W))
+
   // countdown register
   val timer = RegInit(0.U(32.W))
 
@@ -40,7 +43,7 @@ class DRAMBankWithWait(
 
   // underlying memory array
   val mem = Mem(params.addressSpaceSize, UInt(memConfig.dataWidth.W))
-  loadMemoryFromFile(mem, "/workspace/chipyard/generators/memorysim/zero_init.hex")
+  // loadMemoryFromFile(mem, "/workspace/chipyard/generators/memorysim/zero_init.hex")
 
   // decode bits from pending
   val cs_p  = !pending.cs
@@ -69,7 +72,7 @@ class DRAMBankWithWait(
   resp.valid           := false.B
   resp.bits.request_id := pending.request_id
   resp.bits.addr       := pending.addr
-  resp.bits.data       := pending.data
+  resp.bits.data       := respData
 
   switch(state) {
     is(sIdle) {
@@ -96,56 +99,55 @@ class DRAMBankWithWait(
     }
 
     is(sExec) {
-      // perform the operation
+      // perform the operation and prepare response data
       when(doActivate) {
         if (localConfig.verbose) {
           printf("Activate\n");
         }
-        rowActive  := true.B
-        activeRow  := reqRow
-        resp.valid := true.B
+        rowActive := true.B
+        activeRow := reqRow
+        respData  := 0.U(memConfig.dataWidth.W)
       }.elsewhen(doRead) {
         val data = mem.read(activeRow * params.numCols.U + reqCol)
         if (localConfig.verbose) {
           printf("Read %x\n", pending.addr);
         }
-        resp.bits.data := data
-        resp.valid     := true.B
+        respData := data
       }.elsewhen(doWrite) {
         val idx = activeRow * params.numCols.U + reqCol
         if (localConfig.verbose) {
           printf("Write\n");
         }
         mem.write(idx, pending.data)
-        resp.bits.data := pending.data
-        resp.valid     := true.B
+        respData := 0.U(memConfig.dataWidth.W)
       }.elsewhen(doPrecharge) {
         if (localConfig.verbose) {
           printf("Precharge\n");
         }
-        rowActive  := false.B
-        resp.valid := true.B
+        rowActive := false.B
+        respData  := 0.U(memConfig.dataWidth.W)
       }.elsewhen(doRefresh) {
         if (localConfig.verbose) {
           printf("Refresh\n");
         }
-        rowActive  := false.B
-        resp.valid := true.B
+        rowActive := false.B
+        respData  := 0.U(memConfig.dataWidth.W)
       }.elsewhen(doSrefEnter || doSrefExit) {
         if (localConfig.verbose) {
           printf("SREF\n");
         }
-        resp.valid := true.B
+        respData := 0.U(memConfig.dataWidth.W)
       }
 
-      when(resp.fire) {
-        state := sResp
-      }
+      state := sResp
     }
 
     is(sResp) {
-      // ensure one cycle for response
-      state := sIdle
+      // handle response handshake
+      resp.valid := true.B
+      when(resp.fire) {
+        state := sIdle
+      }
     }
   }
 
