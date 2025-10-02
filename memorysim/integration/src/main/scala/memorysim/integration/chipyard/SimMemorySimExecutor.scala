@@ -38,8 +38,8 @@ class SimMemorySimExecutor(
       addressWidth = addrBits,
       dataWidth = dataBits,
       numberOfChannels = 1,
-      numberOfRanks = 1,
-      numberOfBanks = 1,
+      numberOfRanks = 2,
+      numberOfBanks = 8,
       memoryQueueSize = 8
     ),
     bankConfiguration = DRAMBankParameters(),

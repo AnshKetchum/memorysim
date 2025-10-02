@@ -25,10 +25,10 @@ class ClosedPageBankScheduler(
 
   // --------------------------------------------------
   // Global cycle counter & timing regs
-  val cycleCounter = RegInit(0.U(64.W))
+  val cycleCounter = RegInit(0.U(memoryConfig.globalCycleCountBits.W))
   cycleCounter := cycleCounter + 1.U
 
-  val lastRefresh = RegInit(0.U(64.W))
+  val lastRefresh = RegInit(0.U(memoryConfig.globalCycleCountBits.W))
 
   // --------------------------------------------------
   // Refresh counter for internal request ID generation
@@ -58,8 +58,8 @@ class ClosedPageBankScheduler(
   val reqReg      = Reg(new ControllerRequest(memoryConfig))
   val reqIsRead   = RegInit(false.B)
   val reqIsWrite  = RegInit(false.B)
-  val reqAddrReg  = RegInit(0.U(32.W))
-  val reqWdataReg = RegInit(0.U(32.W))
+  val reqAddrReg  = RegInit(0.U(memoryConfig.addressWidth.W))
+  val reqWdataReg = RegInit(0.U(memoryConfig.dataWidth.W))
   val reqIdReg    = RegInit(0.U(memoryConfig.requestIDBits.W))
 
   // Request packets for activate, read/write, and refresh with distinct internal IDs
@@ -68,7 +68,7 @@ class ClosedPageBankScheduler(
   val refreshReqPacket   = Reg(new RequestPacket(memoryConfig))
 
   // Response data register
-  val responseDataReg = RegInit(0.U(32.W))
+  val responseDataReg = RegInit(0.U(memoryConfig.dataWidth.W))
 
   // --------------------------------------------------
   // FSM states - 5-state cycle with separate response state
@@ -104,7 +104,7 @@ class ClosedPageBankScheduler(
   io.cmdOut.valid := issueStates.map(_ === state).reduce(_ || _) && !sentCmd && !cmdReg.cs
 
   // Response data wire
-  val responseDataWire = Wire(UInt(32.W))
+  val responseDataWire = Wire(UInt(memoryConfig.dataWidth.W))
   responseDataWire := Mux(reqIsRead, responseDataReg, 0.U)
 
   val respReg = Wire(new ControllerResponse(memoryConfig))
