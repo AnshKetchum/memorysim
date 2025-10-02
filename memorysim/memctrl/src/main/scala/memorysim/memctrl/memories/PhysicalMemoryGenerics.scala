@@ -17,7 +17,7 @@ class RequestPacket(params: MemoryConfigurationParameters) extends Bundle {
 class PhysicalMemoryCommand(params: MemoryConfigurationParameters) extends Bundle {
   val addr       = UInt(params.addressWidth.W)
   val data       = UInt(params.dataWidth.W)
-  val op               = UInt(log2Ceil(DRAMOp.N_OPS).W) // Encoded DRAM operation
+  val op         = UInt(params.dataWidth.W) // Encoded DRAM operation
   val request_id = new RequestPacket(params)
 }
 
@@ -45,7 +45,7 @@ class PhysicalMemoryIO(params: MemoryConfigurationParameters) extends Bundle {
 class BankMemoryCommand(params: MemoryConfigurationParameters) extends Bundle {
   val addr             = UInt(params.addressWidth.W)
   val data             = UInt(params.dataWidth.W)
-  val op               = UInt(log2Ceil(DRAMOp.N_OPS).W) // Encoded DRAM operation
+  val op               = UInt(params.dataWidth.W) // Encoded DRAM operation
   val request_id       = new RequestPacket(params)
   val lastColBankGroup = UInt(32.W)
   val lastColCycle     = UInt(32.W)

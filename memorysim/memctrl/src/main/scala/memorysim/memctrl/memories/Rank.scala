@@ -48,10 +48,7 @@ class Rank(
     // Fill in the command fields
     stamped.bits.addr             := deqPort.bits.addr
     stamped.bits.data             := deqPort.bits.data
-    stamped.bits.cs               := deqPort.bits.cs
-    stamped.bits.ras              := deqPort.bits.ras
-    stamped.bits.cas              := deqPort.bits.cas
-    stamped.bits.we               := deqPort.bits.we
+    stamped.bits.op               := deqPort.bits.op
     stamped.bits.request_id       := deqPort.bits.request_id
     stamped.bits.lastColBankGroup := lastColBank
     stamped.bits.lastColCycle     := lastColCycle

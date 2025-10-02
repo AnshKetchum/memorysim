@@ -5,17 +5,15 @@ module BankSchedulerPhysicalMemoryRequestPerformanceStatistics #(
     parameter int ADDRESS_WIDTH,
     parameter int DATA_WIDTH,
     parameter int GLOBAL_CYCLE_BITS,
-    parameter int REQUEST_ID_BITS
+    parameter int REQUEST_ID_BITS,
+    parameter int OP_WIDTH = 4
 )(
     input  wire                          clk,
     input  wire                          reset,
     input  wire                          req_fire,
     input  wire [ADDRESS_WIDTH-1:0]      addr,
     input  wire [DATA_WIDTH-1:0]         data,
-    input  wire                          cs,
-    input  wire                          ras,
-    input  wire                          cas,
-    input  wire                          we,
+    input  wire [OP_WIDTH-1:0]           op,              // DRAMOp enum encoding
     input  wire [GLOBAL_CYCLE_BITS-1:0]  globalCycle,
     input  wire [REQUEST_ID_BITS-1:0]    request_id,
     input  wire [REQUEST_ID_BITS-1:0]    internal_req_id,
@@ -27,55 +25,36 @@ module BankSchedulerPhysicalMemoryRequestPerformanceStatistics #(
     integer file;
     reg [1023:0] filename;
 
-    // Request type encoding (small integer IDs)
-    // +-----------------------+---------+
-    // | String                | ID      |
-    // +-----------------------+---------+
-    // | REFRESH               | 0       |
-    // | PRECHARGE             | 1       |
-    // | ACTIVATE              | 2       |
-    // | READ                  | 3       |
-    // | WRITE                 | 4       |
-    // | SELF REFRESH ENTER    | 5       |
-    // | SELF REFRESH EXIT     | 6       |
-    // | UNKNOWN               | 7       |
-    // +-----------------------+---------+
-    //
-    // Use a small packed reg to avoid wide string literal assignments
-    // and the associated WIDTHEXPAND warnings.
-    reg [2:0] reqType; // holds 0..7 per table above
+    // String register (max 16 chars wide here)
+    reg [8*16-1:0] opString;
 
     initial begin
-        $sformat(filename, "memory_request_queue_stats_scheduler_channel%0d_rank%0d_bank%0d.csv", CHANNEL, RANK, BANK);
+        $sformat(filename,
+            "memory_request_queue_stats_scheduler_channel%0d_rank%0d_bank%0d.csv",
+            CHANNEL, RANK, BANK);
         file = $fopen(filename, "w");
-        $fwrite(file, "RequestID,InternalReqID,ChannelID,RankID,BankID,SchedulerID,Address,Data,TypeID,Cycle\n");
+        $fwrite(file,
+          "RequestID,InternalReqID,ChannelID,RankID,BankID,SchedulerID,Address,Data,Op,Cycle\n");
     end
 
     always @(posedge clk) begin
         if (!reset && req_fire) begin
-            // Encode DRAM command type as a small integer ID
-            if (cs == 0 && ras == 0 && cas == 0 && we == 1)
-                reqType = 0; // REFRESH
-            else if (cs == 0 && ras == 0 && cas == 1 && we == 0)
-                reqType = 1; // PRECHARGE
-            else if (cs == 0 && ras == 0 && cas == 1 && we == 1)
-                reqType = 2; // ACTIVATE
-            else if (cs == 0 && ras == 1 && cas == 0 && we == 1)
-                reqType = 3; // READ
-            else if (cs == 0 && ras == 1 && cas == 0 && we == 0)
-                reqType = 4; // WRITE
-            else if (cs == 0 && ras == 0 && cas == 0 && we == 0)
-                reqType = 5; // SELF REFRESH ENTER
-            else if (cs == 0 && ras == 1 && cas == 1 && we == 1)
-                reqType = 6; // SELF REFRESH EXIT
-            else
-                reqType = 7; // UNKNOWN
+            // Map op code to string name
+            case (op)
+                0:  opString = "REFRESH";
+                1:  opString = "PRECHARGE";
+                2:  opString = "ACTIVATE";
+                3:  opString = "READ";
+                4:  opString = "WRITE";
+                5:  opString = "SELFREF_ENTER";
+                6:  opString = "SELFREF_EXIT";
+                default: opString = "UNKNOWN";
+            endcase
 
-            // Log CSV with numeric type ID (avoids wide string assignments)
-            // Fields: RequestID,InternalReqID,ChannelID,RankID,BankID,SchedulerID,Address,Data,TypeID,Cycle
-            $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+            // Log CSV with string field
+            $fwrite(file, "%0d,%0d,%0d,%0d,%0d,%0d,%0h,%0h,%s,%0d\n",
                 request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id,
-                addr, data, reqType, globalCycle);
+                addr, data, opString, globalCycle);
         end
     end
 endmodule

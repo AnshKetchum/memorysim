@@ -13,6 +13,7 @@ object DRAMOp {
   val REFRESH         = 6.U(4.W)
   val SREF_ENTER      = 7.U(4.W)
   val SREF_EXIT       = 8.U(4.W)
+  val INVALID_OP      = 15.U(4.W)
   val N_OPS           = 16 // For now, we'll just set this to a convenient power of two. This isn't REALLY the number of operations.
   // Scala ints for matching
   val ACTIVATE_INT    = 0

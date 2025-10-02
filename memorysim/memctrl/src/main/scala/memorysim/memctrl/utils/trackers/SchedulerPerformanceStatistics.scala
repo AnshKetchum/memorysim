@@ -140,12 +140,6 @@ class BankSchedulerPerformanceStatistics(
     )
   )
 
-  // // Connect clock and reset
-  // Seq(perfIn.io, perfOut.io, perfMemRequests.io, perfMemResponses.io).foreach { bb =>
-  //   bbi.clk   := io.clk
-  //   bbi.reset := io.reset.asBool
-  // }
-
   /* Request / Response Interface */
   // Connect input request logging
   perfIn.io.clk         := clock
@@ -175,10 +169,7 @@ class BankSchedulerPerformanceStatistics(
   perfMemRequests.io.req_fire        := io.mem_request_fire
   perfMemRequests.io.addr            := io.mem_request_bits.addr
   perfMemRequests.io.data            := io.mem_request_bits.data
-  perfMemRequests.io.cs              := io.mem_request_bits.cs
-  perfMemRequests.io.ras             := io.mem_request_bits.ras
-  perfMemRequests.io.cas             := io.mem_request_bits.cas
-  perfMemRequests.io.we              := io.mem_request_bits.we
+  perfMemRequests.io.op              := io.mem_request_bits.op
   perfMemRequests.io.request_id      := io.mem_request_bits.request_id.request_id
   perfMemRequests.io.internal_req_id := io.mem_request_bits.request_id.internal_req_id
   perfMemRequests.io.channel_id      := io.mem_request_bits.request_id.channel_id
