@@ -12,11 +12,13 @@ import chisel3.util._
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankPhysicalMemoryRequestPerformanceStatistics(
+  val channel:   Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
+        "CHANNEL"           -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,
@@ -57,11 +59,13 @@ class BankPhysicalMemoryRequestPerformanceStatistics(
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankPhysicalMemoryResponsePerformanceStatistics(
+  val channel:   Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
+        "CHANNEL"           -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,
@@ -116,6 +120,7 @@ class BankPerformanceStatistics(localConfiguration: LocalConfigurationParameters
   // Instantiate the BlackBox modules
   val perfMemRequests  = Module(
     new BankPhysicalMemoryRequestPerformanceStatistics(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params
@@ -123,6 +128,7 @@ class BankPerformanceStatistics(localConfiguration: LocalConfigurationParameters
   )
   val perfMemResponses = Module(
     new BankPhysicalMemoryResponsePerformanceStatistics(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params

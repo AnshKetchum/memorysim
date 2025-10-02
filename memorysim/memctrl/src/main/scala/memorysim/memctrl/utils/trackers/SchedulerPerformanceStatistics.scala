@@ -12,11 +12,13 @@ import chisel3.util._
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankSchedulerPerformanceStatisticsInput(
+  val channel:      Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
+        "CHANNEL"              -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,
@@ -48,11 +50,13 @@ class BankSchedulerPerformanceStatisticsInput(
   *   - globalCycle: the global cycle counter.
   */
 class BankSchedulerPerformanceStatisticsOutput(
+  val channel:      Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
+        "CHANNEL"              -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,
@@ -105,6 +109,7 @@ class BankSchedulerPerformanceStatistics(
   // Instantiate the BlackBox modules
   val perfIn           = Module(
     new BankSchedulerPerformanceStatisticsInput(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params
@@ -112,6 +117,7 @@ class BankSchedulerPerformanceStatistics(
   )
   val perfOut          = Module(
     new BankSchedulerPerformanceStatisticsOutput(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params
@@ -119,6 +125,7 @@ class BankSchedulerPerformanceStatistics(
   )
   val perfMemRequests  = Module(
     new BankSchedulerPhysicalMemoryRequestPerformanceStatistics(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params
@@ -126,6 +133,7 @@ class BankSchedulerPerformanceStatistics(
   )
   val perfMemResponses = Module(
     new BankSchedulerPhysicalMemoryResponsePerformanceStatistics(
+      localConfiguration.channelIndex,
       localConfiguration.rankIndex,
       localConfiguration.bankIndex,
       params

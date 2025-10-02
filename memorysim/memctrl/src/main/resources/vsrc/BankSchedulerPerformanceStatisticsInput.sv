@@ -1,4 +1,5 @@
 module BankSchedulerPerformanceStatisticsInput #(
+    parameter int CHANNEL,
     parameter int RANK,
     parameter int BANK, 
     parameter int ADDRESS_WIDTH,
@@ -19,7 +20,7 @@ module BankSchedulerPerformanceStatisticsInput #(
     reg [1023:0] filename;
 
     initial begin
-        $sformat(filename, "input_request_stats_scheduler_rank%0d_bank%0d.csv", RANK, BANK);
+        $sformat(filename, "input_request_stats_scheduler_channel%0d_rank%0d_bank%0d.csv", CHANNEL, RANK, BANK);
         file = $fopen(filename, "w");
         $fwrite(file, "RequestID,Address,TypeRd,TypeWr,Cycle\n");
     end
