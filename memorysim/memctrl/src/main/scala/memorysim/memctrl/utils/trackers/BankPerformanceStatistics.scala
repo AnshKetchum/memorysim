@@ -35,10 +35,7 @@ class BankPhysicalMemoryRequestPerformanceStatistics(
     val req_fire        = Input(Bool())
     val addr            = Input(UInt(memParams.addressWidth.W))
     val data            = Input(UInt(memParams.dataWidth.W))
-    val cs              = Input(Bool())
-    val ras             = Input(Bool())
-    val cas             = Input(Bool())
-    val we              = Input(Bool())
+    val op              = Input(UInt(memParams.dataWidth.W))
     val globalCycle     = Input(UInt(memParams.globalCycleCountBits.W))
     val request_id      = Input(UInt(memParams.requestIDBits.W))
     val internal_req_id = Input(UInt(memParams.requestIDBits.W))
@@ -142,10 +139,7 @@ class BankPerformanceStatistics(localConfiguration: LocalConfigurationParameters
   perfMemRequests.io.req_fire        := io.mem_request_fire
   perfMemRequests.io.addr            := io.mem_request_bits.addr
   perfMemRequests.io.data            := io.mem_request_bits.data
-  perfMemRequests.io.cs              := io.mem_request_bits.cs
-  perfMemRequests.io.ras             := io.mem_request_bits.ras
-  perfMemRequests.io.cas             := io.mem_request_bits.cas
-  perfMemRequests.io.we              := io.mem_request_bits.we
+  perfMemRequests.io.op              := io.mem_request_bits.op
   perfMemRequests.io.request_id      := io.mem_request_bits.request_id.request_id
   perfMemRequests.io.internal_req_id := io.mem_request_bits.request_id.internal_req_id
   perfMemRequests.io.channel_id      := io.mem_request_bits.request_id.channel_id

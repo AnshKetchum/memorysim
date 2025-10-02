@@ -18,7 +18,6 @@ module SystemQueuePerformanceStatisticsInput #(
     initial begin
         file = $fopen("input_request_stats.csv", "w");
         $fwrite(file, "RequestID,Address,Read,Write,Cycle,Write Data\n");
-        $display("IN VERILOG INPUT");
     end
 
 

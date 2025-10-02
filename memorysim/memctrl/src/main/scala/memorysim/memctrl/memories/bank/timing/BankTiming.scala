@@ -10,46 +10,29 @@ class TimingEngine(
     extends Module {
   val io = IO(new Bundle {
     val cmd        = Flipped(Decoupled(new BankMemoryCommand(memConfig)))
-    val waitCycles = Output(UInt(32.W))
+    val waitCycles = Output(UInt(memConfig.globalCycleCountBits.W))
   })
 
   // Prev/Cur ops
-  val prevOp = RegInit(DRAMOp.N_OPS.U)
-  // Decode incoming command into DRAMOp
-  val cs_p   = Wire(Bool()); cs_p  := !io.cmd.bits.cs
-  val ras_p  = Wire(Bool()); ras_p := !io.cmd.bits.ras
-  val cas_p  = Wire(Bool()); cas_p := !io.cmd.bits.cas
-  val we_p   = Wire(Bool()); we_p  := !io.cmd.bits.we
+  val INVALID_OP = DRAMOp.INVALID_OP
+  val prevOp     = RegInit(INVALID_OP)
 
-  val currOp = Wire(UInt(3.W))
-  currOp := DRAMOp.N_OPS.U // default invalid op
-
-  switch(Cat(cs_p, ras_p, cas_p, we_p)) {
-    is("b1100".U) { currOp := DRAMOp.ACTIVATE } // cs=1 ras=1 cas=0 we=0
-    is("b1010".U) { currOp := DRAMOp.READ } // cs=1 ras=0 cas=1 we=0
-    is("b1011".U) { currOp := DRAMOp.WRITE } // cs=1 ras=0 cas=1 we=1
-    is("b1101".U) { currOp := DRAMOp.PRECHARGE } // cs=1 ras=1 cas=0 we=1
-    is("b1110".U) { currOp := DRAMOp.REFRESH } // cs=1 ras=1 cas=1 we=0
-    is("b1111".U) { currOp := DRAMOp.SREF_ENTER } // cs=1 ras=1 cas=1 we=1
+  // Directly use op field from command
+  val currOp = WireDefault(INVALID_OP)
+  when(io.cmd.valid) {
+    currOp := io.cmd.bits.op
   }
 
-  // When a new command fires, shift curr->prev and decode new opcode
   when(io.cmd.fire) {
     if (localConfig.verbose) {
-      printf(
-        "Received command - cs = %d ras = %d cas = %d we = %d\n",
-        io.cmd.bits.cs,
-        io.cmd.bits.ras,
-        io.cmd.bits.cas,
-        io.cmd.bits.we
-      )
+      printf("Received command - op = %d\n", io.cmd.bits.op)
       printf("Prev = %d, Cur = %d Wait = %d\n", prevOp, currOp, io.waitCycles)
     }
     prevOp := currOp
   }
 
   // ----------------------------------------------------------------
-  // 1) All same‑bank delays as functions of base params
+  // 1) Base DRAM timing params
   // ----------------------------------------------------------------
   val burst  = params.burst_cycle.U(32.W)
   val tCCD_L = params.tCCD_L.U(32.W)
@@ -70,7 +53,7 @@ class TimingEngine(
   val tRTP_S = params.tRTP_S.U(32.W)
   val tXS    = params.tXS.U(32.W)
 
-  // Derived delays:
+  // Derived delays
   val read_to_read_l    = Mux(burst > tCCD_L, burst, tCCD_L)
   val read_to_write     = RL + burst - WL + tRTRS
   val read_to_precharge = AL + tRTP
@@ -91,7 +74,7 @@ class TimingEngine(
   val refresh_to_activate = tRFC
 
   // ----------------------------------------------------------------
-  // 2) same‑bank timing matrix
+  // 2) same-bank timing matrix with new SREF ops
   // ----------------------------------------------------------------
   val timing = VecInit(Seq.tabulate(DRAMOp.N_OPS) { i =>
     VecInit(Seq.tabulate(DRAMOp.N_OPS) { j =>
@@ -108,27 +91,30 @@ class TimingEngine(
         case (DRAMOp.WRITE_INT, DRAMOp.RP_INT)    => write_to_read_l
         case (DRAMOp.WRITE_INT, DRAMOp.WP_INT)    => write_to_write_l
 
-        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT) => readp_to_activate
-        case (DRAMOp.RP_INT, DRAMOp.REF_INT)      => readp_to_activate
-        case (DRAMOp.RP_INT, DRAMOp.SREF_INT)     => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT)      => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.REF_INT)           => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.SREF_ENTER_INT)    => readp_to_activate
 
-        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT) => writep_to_activate
-        case (DRAMOp.WP_INT, DRAMOp.REF_INT)      => writep_to_activate
-        case (DRAMOp.WP_INT, DRAMOp.SREF_INT)     => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT)      => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.REF_INT)           => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.SREF_ENTER_INT)    => writep_to_activate
 
         case (DRAMOp.ACTIVATE_INT, DRAMOp.ACTIVATE_INT) => activate_to_act_l
         case (DRAMOp.ACTIVATE_INT, DRAMOp.READ_INT)     => activate_to_read
         case (DRAMOp.ACTIVATE_INT, DRAMOp.WRITE_INT)    => activate_to_write
         case (DRAMOp.ACTIVATE_INT, DRAMOp.PRE_INT)      => activate_to_precharge
 
-        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT) => precharge_to_activate
-        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)      => precharge_to_activate
-        case (DRAMOp.PRE_INT, DRAMOp.SREF_INT)     => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT)      => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)           => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.SREF_ENTER_INT)    => precharge_to_activate
 
-        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT) => refresh_to_activate
-        case (DRAMOp.REF_INT, DRAMOp.SREF_INT)     => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT)      => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.SREF_ENTER_INT)    => refresh_to_activate
 
-        case (DRAMOp.SREF_INT, DRAMOp.SREF_INT) => tXS
+        case (DRAMOp.SREF_ENTER_INT, DRAMOp.SREF_ENTER_INT) => tXS
+        case (DRAMOp.SREF_EXIT_INT, DRAMOp.ACTIVATE_INT)    => tXS
+        case (DRAMOp.SREF_EXIT_INT, DRAMOp.READ_INT)        => tXS
+        case (DRAMOp.SREF_EXIT_INT, DRAMOp.WRITE_INT)       => tXS
 
         case _ => 1.U(32.W)
       }
@@ -138,7 +124,7 @@ class TimingEngine(
   // ----------------------------------------------------------------
   // 3) Final lookup
   // ----------------------------------------------------------------
-  when(prevOp === DRAMOp.N_OPS.U || currOp === DRAMOp.N_OPS.U) {
+  when(prevOp === INVALID_OP || currOp === INVALID_OP) {
     io.waitCycles := 0.U
   }.otherwise {
     io.waitCycles := timing(prevOp)(currOp)

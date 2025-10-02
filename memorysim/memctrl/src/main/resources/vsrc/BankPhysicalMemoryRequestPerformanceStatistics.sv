@@ -7,26 +7,24 @@ module BankPhysicalMemoryRequestPerformanceStatistics #(
     parameter int GLOBAL_CYCLE_BITS,
     parameter int REQUEST_ID_BITS
 )(
-    input wire clk,
-    input wire reset,
-    input wire req_fire,
-    input wire [ADDRESS_WIDTH-1:0] addr,
-    input wire [DATA_WIDTH-1:0] data,
-    input wire cs,
-    input wire ras,
-    input wire cas,
-    input wire we,
-    input wire [GLOBAL_CYCLE_BITS-1:0] globalCycle,
-    input wire [REQUEST_ID_BITS-1:0] request_id,
-    input wire [REQUEST_ID_BITS-1:0] internal_req_id,
-    input wire [REQUEST_ID_BITS-1:0] channel_id,
-    input wire [REQUEST_ID_BITS-1:0] rank_id, 
-    input wire [REQUEST_ID_BITS-1:0] bank_id,
-    input wire [REQUEST_ID_BITS-1:0] scheduler_id
+    input  wire clk,
+    input  wire reset,
+    input  wire req_fire,
+    input  wire [ADDRESS_WIDTH-1:0] addr,
+    input  wire [DATA_WIDTH-1:0] data,
+    input  wire [DATA_WIDTH-1:0] op,  // DRAMOp value (width defined upstream)
+    input  wire [GLOBAL_CYCLE_BITS-1:0] globalCycle,
+    input  wire [REQUEST_ID_BITS-1:0] request_id,
+    input  wire [REQUEST_ID_BITS-1:0] internal_req_id,
+    input  wire [REQUEST_ID_BITS-1:0] channel_id,
+    input  wire [REQUEST_ID_BITS-1:0] rank_id, 
+    input  wire [REQUEST_ID_BITS-1:0] bank_id,
+    input  wire [REQUEST_ID_BITS-1:0] scheduler_id
 );
     integer file;
     reg [1023:0] filename;
-    
+    reg [8*24-1:0] opString; // longest string = "SELF REFRESH ENTER"
+
     initial begin
         $sformat(filename, "bank_req_queue_stats_channel%0d_rank%0d_bank%0d.csv", CHANNEL, RANK, BANK);
         file = $fopen(filename, "w");
@@ -34,43 +32,21 @@ module BankPhysicalMemoryRequestPerformanceStatistics #(
     end
     
     always @(posedge clk) begin
-        if (reset) begin
-        end else if (req_fire) begin
-            if(cs == 0 && ras == 0 && cas == 0 && we == 1) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "REFRESH", globalCycle);
-            end
-            else if(cs == 0 && ras == 0 && cas == 1 && we == 0) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "PRECHARGE", globalCycle);
-            end 
-            else if(cs == 0 && ras == 0 && cas == 1 && we == 1) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "ACTIVATE", globalCycle);
-            end 
-            else if(cs == 0 && ras == 1 && cas == 0 && we == 1) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "READ", globalCycle);
-            end 
-            else if(cs == 0 && ras == 1 && cas == 0 && we == 0) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "WRITE", globalCycle);
-            end 
-            else if(cs == 0 && ras == 0 && cas == 0 && we == 0) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "SELF REFRESH ENTER", globalCycle);
-            end 
-            else if(cs == 0 && ras == 1 && cas == 1 && we == 1) begin 
-                $fwrite(file, "%d,%d,%d,%d,%d,%d,%d,%s,%d\n", 
-                    request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
-                    addr, "SELF REFRESH EXIT", globalCycle);
-            end 
+        if (!reset && req_fire) begin
+            case (op)
+                0: opString = "REFRESH";
+                1: opString = "PRECHARGE";
+                2: opString = "ACTIVATE";
+                3: opString = "READ";
+                4: opString = "WRITE";
+                5: opString = "SELF REFRESH ENTER";
+                6: opString = "SELF REFRESH EXIT";
+                default: opString = "UNKNOWN";
+            endcase
+
+            $fwrite(file, "%0d,%0d,%0d,%0d,%0d,%0d,%0h,%s,%0d\n", 
+                request_id, internal_req_id, channel_id, rank_id, bank_id, scheduler_id, 
+                addr, opString, globalCycle);
         end
     end
 endmodule

@@ -19,7 +19,6 @@ module SystemQueuePerformanceStatisticsOutput #(
     initial begin
         file = $fopen("output_request_stats.csv", "w");
         $fwrite(file, "RequestID,Address,Read,Write,Cycle, Write Data,Response\n");
-        $display("IN VERILOG OUTPUT");
     end
 
 

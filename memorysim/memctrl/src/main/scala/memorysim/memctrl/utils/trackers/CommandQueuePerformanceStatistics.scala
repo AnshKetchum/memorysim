@@ -28,10 +28,7 @@ class CommandQueuePerformanceStatisticsInput(val memParams: MemoryConfigurationP
     val req_fire        = Input(Bool())
     val addr            = Input(UInt(memParams.addressWidth.W))
     val data            = Input(UInt(memParams.dataWidth.W))
-    val cs              = Input(Bool())
-    val ras             = Input(Bool())
-    val cas             = Input(Bool())
-    val we              = Input(Bool())
+    val op              = Input(UInt(memParams.dataWidth.W))
     val globalCycle     = Input(UInt(memParams.globalCycleCountBits.W))
     val request_id      = Input(UInt(memParams.requestIDBits.W))
     val internal_req_id = Input(UInt(memParams.requestIDBits.W))
@@ -112,10 +109,7 @@ class CommandQueuePerformanceStatistics(params: MemoryConfigurationParameters) e
   perfIn.io.req_fire        := io.in_fire
   perfIn.io.addr            := io.in_bits.addr
   perfIn.io.data            := io.in_bits.data
-  perfIn.io.cs              := io.in_bits.cs
-  perfIn.io.ras             := io.in_bits.ras
-  perfIn.io.cas             := io.in_bits.cas
-  perfIn.io.we              := io.in_bits.we
+  perfIn.io.op              := io.in_bits.op
   perfIn.io.request_id      := io.in_bits.request_id.request_id
   perfIn.io.internal_req_id := io.in_bits.request_id.internal_req_id
   perfIn.io.channel_id      := io.in_bits.request_id.channel_id

@@ -92,20 +92,17 @@ class ClosedPageBankScheduler(
   // Default command fields
   cmdReg.addr       := reqAddrReg
   cmdReg.data       := reqWdataReg
-  cmdReg.cs         := true.B
-  cmdReg.ras        := false.B
-  cmdReg.cas        := false.B
-  cmdReg.we         := false.B
+  cmdReg.op         := DRAMOp.ACTIVATE // Default, will be overridden
   cmdReg.request_id := activateReqPacket // Default, will be overridden
   io.cmdOut.bits    := cmdReg
 
   // Issue commands when in command states and haven't sent yet
   val issueStates = Seq(sActivate, sReadWrite, sRefresh)
-  io.cmdOut.valid := issueStates.map(_ === state).reduce(_ || _) && !sentCmd && !cmdReg.cs
+  io.cmdOut.valid := issueStates.map(_ === state).reduce(_ || _) && !sentCmd
 
   // Response data wire
   val responseDataWire = Wire(UInt(memoryConfig.dataWidth.W))
-  responseDataWire := Mux(reqIsRead, responseDataReg, 0.U)
+  responseDataWire := responseDataReg
 
   val respReg = Wire(new ControllerResponse(memoryConfig))
   respReg.addr       := reqAddrReg
@@ -155,11 +152,8 @@ class ClosedPageBankScheduler(
 
     is(sActivate) {
       when(!sentCmd) {
-        // Send ACTIVATE command with internal_req_id = 1
-        cmdReg.cs         := false.B
-        cmdReg.ras        := false.B
-        cmdReg.cas        := true.B
-        cmdReg.we         := true.B
+        // Send ACTIVATE command
+        cmdReg.op         := DRAMOp.ACTIVATE
         cmdReg.request_id := activateReqPacket
       }
       when(io.cmdOut.fire) {
@@ -173,11 +167,8 @@ class ClosedPageBankScheduler(
 
     is(sReadWrite) {
       when(!sentCmd) {
-        // Send READ or WRITE command with internal_req_id = 2 or 3
-        cmdReg.cs         := false.B
-        cmdReg.ras        := true.B
-        cmdReg.cas        := false.B
-        cmdReg.we         := Mux(reqIsRead, true.B, false.B)
+        // Send READ or WRITE command
+        cmdReg.op         := Mux(reqIsRead, DRAMOp.READ, DRAMOp.WRITE)
         cmdReg.request_id := readWriteReqPacket
       }
       when(io.cmdOut.fire) {
@@ -208,11 +199,8 @@ class ClosedPageBankScheduler(
 
     is(sRefresh) {
       when(!sentCmd) {
-        // Send REFRESH command with internal_req_id = refreshCounter
-        cmdReg.cs         := false.B
-        cmdReg.ras        := false.B
-        cmdReg.cas        := false.B
-        cmdReg.we         := true.B
+        // Send REFRESH command
+        cmdReg.op         := DRAMOp.REFRESH
         cmdReg.addr       := refreshAddr
         cmdReg.request_id := refreshReqPacket
       }

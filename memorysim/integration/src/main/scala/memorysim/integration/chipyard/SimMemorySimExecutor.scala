@@ -37,7 +37,7 @@ class SimMemorySimExecutor(
     memConfiguration = MemoryConfigurationParameters(
       addressWidth = addrBits,
       dataWidth = dataBits,
-      numberOfChannels = 1,
+      numberOfChannels = 4,
       numberOfRanks = 2,
       numberOfBanks = 8,
       memoryQueueSize = 8
