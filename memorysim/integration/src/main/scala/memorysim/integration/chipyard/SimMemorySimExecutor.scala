@@ -17,7 +17,9 @@ class SimMemorySimExecutor(
   lineSize: Int,
   memBase:  BigInt,
   params:   AXI4BundleParameters,
-  chipId:   Int)
+  chipId:   Int,
+  nChannels: Int, nRanks: Int, nBanks: Int, 
+  componentsQueueSize: Int = 8)
     extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AXI4Bundle(params))
@@ -37,14 +39,14 @@ class SimMemorySimExecutor(
     memConfiguration = MemoryConfigurationParameters(
       addressWidth = addrBits,
       dataWidth = dataBits,
-      numberOfChannels = 4,
-      numberOfRanks = 2,
-      numberOfBanks = 8,
-      memoryQueueSize = 8
+      numberOfChannels = nChannels,
+      numberOfRanks = nRanks,
+      numberOfBanks = nBanks,
+      memoryQueueSize = componentsQueueSize
     ),
     bankConfiguration = DRAMBankParameters(),
     controllerConfiguration = MemoryControllerParameters(
-      queueSize = 8,
+      queueSize = componentsQueueSize,
       openPagePolicy = true
     ),
     trackPerformance = true
