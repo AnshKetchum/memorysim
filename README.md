@@ -72,28 +72,6 @@ For detailed metrics, refer to the results section of the [paper](docs/paper.pdf
 
 - [Chisel](https://www.chisel-lang.org/) (Scala 2.13+, SBT)
 - [Chipyard](https://github.com/chipsalliance/chipyard)
-- [FireSim](https://github.com/firesim/firesim) (optional for FPGA emulation)
-
-### Installation
-
-```bash
-git clone https://github.com/AnshKetchum/hbm-controller.git
-cd hbm-controller
-# Build Chisel project
-sbt compile
-```
-
-### Running Simulations
-
-```bash
-# Trace-driven standalone mode
-sbt "runMain memsim.TraceRunner --trace-file traces/conv2d.trace --queue-size 128"
-
-# Co-simulation within Chipyard/FireSim
-cd chipyard
-./scripts/generate-configs.sh
-make hbm-sim-project
-```
 
 ## Running Chipyard Benchmarks
 
