@@ -4,8 +4,7 @@ Looking for contributions!
 
 Edit 8/19/2025 - Check out our paper on MemorySim that's on [arXiV](https://arxiv.org/abs/2508.12636)! 
 
-**MemorySim** is an RTL-native, high level memory simulator designed for the Chisel/Chipyard ecosystem. It strives to provide cycle-accurate profiling of memory subsystems, enabling hardware designers to evaluate bandwidth, latency, and power-performance trade-offs in next-generation AI accelerators.
-
+**MemorySim** is an RTL-native, high level memory simulator designed for the Chisel/Chipyard ecosystem and trace based simulations. It strives to provide cycle-accurate profiling of memory subsystems, enabling hardware designers to evaluate bandwidth, latency, and power-performance trade-offs in next-generation AI accelerators.
 
 ##  Chipyard API 
 
@@ -17,12 +16,40 @@ Edit 8/19/2025 - Check out our paper on MemorySim that's on [arXiV](https://arxi
 
 ### Grab and go config
 
+Add this into `RocketConfigs.scala`.
+
   ```scala
   class MemorySimRocketConfig extends Config(
     new chipyard.harness.WithMemorySimMem(nChannels = 2, nRanks = 2, nBanks = 8) ++ /** add MemorySim DRAM model for axi4 backing memory, if axi4 mem is enabled */
     new freechips.rocketchip.rocket.WithNHugeCores(1) ++         // single rocket-core
     new chipyard.config.AbstractConfig)
   ```
+
+## Standalone, Trace Based Simulations 
+
+### Installation 
+
+1. Elaborate Chisel into verilog
+
+```bash 
+  make verilog
+```
+
+2. Build the trace based simulator - 
+
+```bash
+  make verilator-trace
+```
+
+3. Run the traces 
+
+See [tests/test_traces.py](tests/test_traces.py) as an example.
+
+The general command is as follows 
+
+```bash
+./obj_dir/VMultiChannelSystem -t (PATH TO TRACE FILE) -c (MAX CYCLES TO RUN FOR) -m (UPPER BOUND ON TIME PER REQUEST)
+```
 
 ## Features
 - **High Fidelity Chipyard Integration** 
