@@ -10,7 +10,7 @@ import org.scalatest.matchers.must.Matchers
   * The test enqueues a write request followed by a read request on the 'in' interface. The response from the 'out'
   * interface is used to verify that the written data can be read back.
   */
-class MemorySystemSpec extends AnyFreeSpec with Matchers {
+class MemorySystemSimpleSpec extends AnyFreeSpec with Matchers {
 
   "SingleChannelSystem should correctly handle a write followed by a read transaction" in {
     simulate(new SingleChannelSystem(SingleChannelMemoryConfigurationParams(), LocalConfigurationParameters())) { dut =>

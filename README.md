@@ -6,12 +6,30 @@ Edit 8/19/2025 - Check out our paper on MemorySim that's on [arXiV](https://arxi
 
 **MemorySim** is an RTL-native, high level memory simulator designed for the Chisel/Chipyard ecosystem. It strives to provide cycle-accurate profiling of memory subsystems, enabling hardware designers to evaluate bandwidth, latency, and power-performance trade-offs in next-generation AI accelerators.
 
+
+##  Chipyard API 
+
+### Quickstart
+
+  ```scala
+    new chipyard.harness.WithMemorySimMem ++ 
+  ```
+
+### Grab and go config
+
+  ```scala
+  class MemorySimRocketConfig extends Config(
+    new chipyard.harness.WithMemorySimMem(nChannels = 2, nRanks = 2, nBanks = 8) ++ /** add MemorySim DRAM model for axi4 backing memory, if axi4 mem is enabled */
+    new freechips.rocketchip.rocket.WithNHugeCores(1) ++         // single rocket-core
+    new chipyard.config.AbstractConfig)
+  ```
+
 ## Features
+- **High Fidelity Chipyard Integration** 
+  Leverage MemorySim with other high quality Chipyard components to obtain accurate, cycle level hardware simulations.
 
 - **RTL-Level Fidelity**  
   Implements bank-level finite-state machines (FSMs) and a comprehensive DRAM timing model entirely in hardware for bit-true data correctness.  
-- **Seamless Integration**  
-  Compatible with Chisel and Verilog-based designs; easily embedded into Chipyard and FireSim flows for FPGA-accelerated emulation.  
 - **Cycle-Accurate DRAM Model**  
   Supports key JEDEC timing parameters (e.g., tRCD, tRP, tRFC) with closed-page policy and self-refresh modes.  
 - **Backpressure Analysis**  
@@ -77,12 +95,9 @@ cd chipyard
 make hbm-sim-project
 ```
 
-## Benchmarks
+## Running Chipyard Benchmarks
 
-- `conv2d.c`: 2D convolution kernel  
-- `multihead_attention.c`: Toy attention workload  
-- `trace_example.c`: Basic sequence validation  
-- `vector_similarity.c`: Cosine similarity search  
+See [Running Chipyard Benchmarks](docs/chipyard.md) for further details.
 
 Trace generators and scripts are located in `benchmarks/`.
 
