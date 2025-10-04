@@ -25,7 +25,7 @@ module BankSchedulerPhysicalMemoryRequestPerformanceStatistics #(
     reg [1023:0] filename;
 
     // String register (max 16 chars wide here)
-    reg [8*16-1:0] opString;
+    reg [8*50-1:0] opString;
 
     initial begin
         $sformat(filename,
