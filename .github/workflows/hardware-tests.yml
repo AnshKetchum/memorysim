@@ -1,4 +1,4 @@
-name: Hardware-Level Verifications
+name: Hardware-Level Unit Tests
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         uses: cachix/install-nix-action@v27
 
       - name: Run sbt tests 
-        run: nix develop --command make test
+        run: nix develop --command make unit-test
 
       - name: Clean 
         run: nix develop --command make clean

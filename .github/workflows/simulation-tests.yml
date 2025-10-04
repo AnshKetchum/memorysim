@@ -28,8 +28,11 @@ jobs:
       - name: Elaborate verilog
         run: nix develop --command make verilog
         
-      - name: Run verilator sanity test
+      - name: Run verilator sanity tests
         run: nix develop --command make verilator-sanity-test
+
+      - name: Run (32 bit) verilator trace tests
+        run: nix develop --command make verilator-trace-tests
 
       - name: Clean 
         run: nix develop --command make clean

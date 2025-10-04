@@ -46,7 +46,7 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
 
   private def dramFlowSpec(name: String, instantiate: => PhysicalMemoryModuleBase): Unit = {
     s"$name DRAM Flow" - {
-      "should support activate → write → read → precharge → refresh" in {
+      "should support activate → write / read → refresh" in {
         simulate(instantiate) { dut =>
           dut.reset.poke(true.B); dut.clock.step(); dut.reset.poke(false.B); dut.clock.step()
           dut.io.phyResp.ready.poke(true.B)
