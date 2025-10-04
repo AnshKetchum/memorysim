@@ -91,25 +91,25 @@ class TimingEngine(
         case (DRAMOp.WRITE_INT, DRAMOp.RP_INT)    => write_to_read_l
         case (DRAMOp.WRITE_INT, DRAMOp.WP_INT)    => write_to_write_l
 
-        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT)      => readp_to_activate
-        case (DRAMOp.RP_INT, DRAMOp.REF_INT)           => readp_to_activate
-        case (DRAMOp.RP_INT, DRAMOp.SREF_ENTER_INT)    => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT)   => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.REF_INT)        => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.SREF_ENTER_INT) => readp_to_activate
 
-        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT)      => writep_to_activate
-        case (DRAMOp.WP_INT, DRAMOp.REF_INT)           => writep_to_activate
-        case (DRAMOp.WP_INT, DRAMOp.SREF_ENTER_INT)    => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT)   => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.REF_INT)        => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.SREF_ENTER_INT) => writep_to_activate
 
         case (DRAMOp.ACTIVATE_INT, DRAMOp.ACTIVATE_INT) => activate_to_act_l
         case (DRAMOp.ACTIVATE_INT, DRAMOp.READ_INT)     => activate_to_read
         case (DRAMOp.ACTIVATE_INT, DRAMOp.WRITE_INT)    => activate_to_write
         case (DRAMOp.ACTIVATE_INT, DRAMOp.PRE_INT)      => activate_to_precharge
 
-        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT)      => precharge_to_activate
-        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)           => precharge_to_activate
-        case (DRAMOp.PRE_INT, DRAMOp.SREF_ENTER_INT)    => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT)   => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)        => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.SREF_ENTER_INT) => precharge_to_activate
 
-        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT)      => refresh_to_activate
-        case (DRAMOp.REF_INT, DRAMOp.SREF_ENTER_INT)    => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT)   => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.SREF_ENTER_INT) => refresh_to_activate
 
         case (DRAMOp.SREF_ENTER_INT, DRAMOp.SREF_ENTER_INT) => tXS
         case (DRAMOp.SREF_EXIT_INT, DRAMOp.ACTIVATE_INT)    => tXS

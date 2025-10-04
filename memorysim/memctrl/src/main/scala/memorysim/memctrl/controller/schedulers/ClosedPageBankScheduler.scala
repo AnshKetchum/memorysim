@@ -92,7 +92,7 @@ class ClosedPageBankScheduler(
   // Default command fields
   cmdReg.addr       := reqAddrReg
   cmdReg.data       := reqWdataReg
-  cmdReg.op         := DRAMOp.ACTIVATE // Default, will be overridden
+  cmdReg.op         := DRAMOp.ACTIVATE   // Default, will be overridden
   cmdReg.request_id := activateReqPacket // Default, will be overridden
   io.cmdOut.bits    := cmdReg
 

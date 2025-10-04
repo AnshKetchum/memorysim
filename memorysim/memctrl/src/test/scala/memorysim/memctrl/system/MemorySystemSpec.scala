@@ -64,7 +64,7 @@ class MemorySystemSpec extends AnyFreeSpec with Matchers {
     }
   }
 
-    "MultiChannelSystem should correctly handle a write followed by a read transaction" in {
+  "MultiChannelSystem should correctly handle a write followed by a read transaction" in {
     simulate(new MultiChannelSystem(SingleChannelMemoryConfigurationParams(), LocalConfigurationParameters())) { dut =>
       // Apply reset
       dut.reset.poke(true.B)

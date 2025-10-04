@@ -15,7 +15,7 @@ class SingleCycleTimingEngine(
 
   // Prev/Cur ops (4-bit to match DRAMOp.* widths)
   val INVALID_OP = DRAMOp.INVALID_OP
-  val prevOp = RegInit(INVALID_OP)
+  val prevOp     = RegInit(INVALID_OP)
 
   // Use op field directly (assume lower 4 bits encode DRAMOp)
   val currOp = Wire(UInt(memConfig.dataWidth.W))
@@ -29,7 +29,7 @@ class SingleCycleTimingEngine(
   // When a new command fires, shift curr->prev
   when(io.cmd.fire) {
     if (localConfig.verbose) {
-      printf("Received command - op = %d\n", io.cmd.bits.op(3,0))
+      printf("Received command - op = %d\n", io.cmd.bits.op(3, 0))
       printf("Prev = %d, Cur = %d Wait = %d\n", prevOp, currOp, io.waitCycles)
     }
     prevOp := currOp
@@ -75,27 +75,27 @@ class SingleCycleTimingEngine(
         case (DRAMOp.WRITE_INT, DRAMOp.RP_INT)    => write_to_read_l
         case (DRAMOp.WRITE_INT, DRAMOp.WP_INT)    => write_to_write_l
 
-        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT) => readp_to_activate
-        case (DRAMOp.RP_INT, DRAMOp.REF_INT)      => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.ACTIVATE_INT)   => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.REF_INT)        => readp_to_activate
         // RP -> SREF_ENTER (kept behavior similar to before)
-        case (DRAMOp.RP_INT, DRAMOp.SREF_ENTER_INT)     => readp_to_activate
+        case (DRAMOp.RP_INT, DRAMOp.SREF_ENTER_INT) => readp_to_activate
 
-        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT) => writep_to_activate
-        case (DRAMOp.WP_INT, DRAMOp.REF_INT)      => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.ACTIVATE_INT)   => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.REF_INT)        => writep_to_activate
         // WP -> SREF_ENTER
-        case (DRAMOp.WP_INT, DRAMOp.SREF_ENTER_INT)     => writep_to_activate
+        case (DRAMOp.WP_INT, DRAMOp.SREF_ENTER_INT) => writep_to_activate
 
         case (DRAMOp.ACTIVATE_INT, DRAMOp.ACTIVATE_INT) => activate_to_act_l
         case (DRAMOp.ACTIVATE_INT, DRAMOp.READ_INT)     => activate_to_read
         case (DRAMOp.ACTIVATE_INT, DRAMOp.WRITE_INT)    => activate_to_write
         case (DRAMOp.ACTIVATE_INT, DRAMOp.PRE_INT)      => activate_to_precharge
 
-        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT) => precharge_to_activate
-        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)      => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.ACTIVATE_INT)   => precharge_to_activate
+        case (DRAMOp.PRE_INT, DRAMOp.REF_INT)        => precharge_to_activate
         case (DRAMOp.PRE_INT, DRAMOp.SREF_ENTER_INT) => precharge_to_activate
 
-        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT) => refresh_to_activate
-        case (DRAMOp.REF_INT, DRAMOp.SREF_ENTER_INT)     => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.ACTIVATE_INT)   => refresh_to_activate
+        case (DRAMOp.REF_INT, DRAMOp.SREF_ENTER_INT) => refresh_to_activate
 
         // SREF_ENTER staying in SREF_ENTER -> tXS
         case (DRAMOp.SREF_ENTER_INT, DRAMOp.SREF_ENTER_INT) => tXS

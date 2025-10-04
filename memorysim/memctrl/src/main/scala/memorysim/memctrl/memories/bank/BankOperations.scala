@@ -14,15 +14,16 @@ object DRAMOp {
   val SREF_ENTER      = 7.U(4.W)
   val SREF_EXIT       = 8.U(4.W)
   val INVALID_OP      = 15.U(4.W)
-  val N_OPS           = 16 // For now, we'll just set this to a convenient power of two. This isn't REALLY the number of operations.
+  val N_OPS           =
+    16 // For now, we'll just set this to a convenient power of two. This isn't REALLY the number of operations.
   // Scala ints for matching
-  val ACTIVATE_INT    = 0
-  val READ_INT        = 1
-  val WRITE_INT       = 2
-  val RP_INT          = 3
-  val WP_INT          = 4
-  val PRE_INT         = 5
-  val REF_INT         = 6
-  val SREF_ENTER_INT        = 7
-  val SREF_EXIT_INT        = 8
+  val ACTIVATE_INT   = 0
+  val READ_INT       = 1
+  val WRITE_INT      = 2
+  val RP_INT         = 3
+  val WP_INT         = 4
+  val PRE_INT        = 5
+  val REF_INT        = 6
+  val SREF_ENTER_INT = 7
+  val SREF_EXIT_INT  = 8
 }

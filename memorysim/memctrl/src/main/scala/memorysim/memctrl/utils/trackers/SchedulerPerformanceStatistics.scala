@@ -12,13 +12,13 @@ import chisel3.util._
   *   - globalCycle: a cycle count for timestamping.
   */
 class BankSchedulerPerformanceStatisticsInput(
-  val channel:      Int,
+  val channel:   Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "CHANNEL"              -> channel,
+        "CHANNEL"           -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,
@@ -50,13 +50,13 @@ class BankSchedulerPerformanceStatisticsInput(
   *   - globalCycle: the global cycle counter.
   */
 class BankSchedulerPerformanceStatisticsOutput(
-  val channel:      Int,
+  val channel:   Int,
   val rank:      Int,
   val bank:      Int,
   val memParams: MemoryConfigurationParameters)
     extends BlackBox(
       Map(
-        "CHANNEL"              -> channel,
+        "CHANNEL"           -> channel,
         "RANK"              -> rank,
         "BANK"              -> bank,
         "ADDRESS_WIDTH"     -> memParams.addressWidth,

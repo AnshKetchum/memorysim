@@ -28,9 +28,9 @@ class PhysicalMemoryModuleSpec extends AnyFreeSpec with Matchers {
   }
 
   private def expectResp(
-    dut: PhysicalMemoryModuleBase,
-    expAddr: UInt,
-    expData: UInt,
+    dut:       PhysicalMemoryModuleBase,
+    expAddr:   UInt,
+    expData:   UInt,
     maxCycles: Int = 500
   ): Unit = {
     var cycles = 0

@@ -13,12 +13,14 @@ import memorysim.memctrl._
   *   - Write now includes an explicit accept state (sWAccept) that waits for memWrapper out
   */
 class SimMemorySimExecutor(
-  memSize:  BigInt,
-  lineSize: Int,
-  memBase:  BigInt,
-  params:   AXI4BundleParameters,
-  chipId:   Int,
-  nChannels: Int, nRanks: Int, nBanks: Int, 
+  memSize:             BigInt,
+  lineSize:            Int,
+  memBase:             BigInt,
+  params:              AXI4BundleParameters,
+  chipId:              Int,
+  nChannels:           Int,
+  nRanks:              Int,
+  nBanks:              Int,
   componentsQueueSize: Int = 8)
     extends Module {
   val io = IO(new Bundle {
