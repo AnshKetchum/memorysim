@@ -1,4 +1,4 @@
-# MemorySim: An RTL-Level Simulator Model for High Performance Memory Subsystems
+# MemorySim: An RTL-Level DRAM Controller and Memory Simulator Model for High Performance Memory Subsystems
 
 Looking for contributions!
 
