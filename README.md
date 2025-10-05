@@ -81,16 +81,6 @@ The general command is as follows
 
 ## Experimentation & Results
 
-We evaluated MemorySim against DRAMSim3 using four microbenchmarks: `conv2d.c`, `multihead_attention.c`, `trace_example.c`, and `vector_similarity.c`. Key findings:
-
-- **Read/Write Overhead**  
-  - Average read penalty: ~111 cycles  
-  - Average write penalty: ~125 cycles  
-- **Latency vs. Queue Depth**  
-  - Exponential latency growth with larger `reqQueue` sizes; sub-80 cycles at queue size 2, >250 cycles at size 1024.  
-- **Throughput–Latency Trade-off**  
-  - Smaller queues reduce latency but can starve bank schedulers, lowering overall requests served.
-
 For detailed metrics, refer to the results section of the [paper](docs/paper.pdf).
 
 ## Getting Started
