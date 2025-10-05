@@ -41,6 +41,8 @@ RUN conda config --set auto_activate_base true
 # Install conda-lock <1.5
 RUN conda install -c conda-forge 'conda-lock<1.5' -y
 
+RUN conda install -c conda-forge 'libstdcxx-ng>=12' -y
+
 # Install firtool
 RUN conda config --add channels ucb-bar && \
     conda config --set channel_priority strict && \
