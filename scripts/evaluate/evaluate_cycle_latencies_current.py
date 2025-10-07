@@ -1,111 +1,189 @@
+#!/usr/bin/env python3
+"""
+Memory Request Latency Distribution Plotter
+
+This script reads the aggregated JSON file and plots latency distributions
+for read and write requests separately.
+"""
+
 import argparse
-import pandas as pd
+import json
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from pathlib import Path
 
 
-def read_csv(path):
-    df = pd.read_csv(path, skipinitialspace=True)
-    df = df.dropna(subset=["RequestID", "Cycle"])
-    df["RequestID"] = df["RequestID"].astype(int)
-    df["Cycle"] = df["Cycle"].astype(int)
-    return df
+def load_json(json_path):
+    """Load the aggregated JSON file"""
+    with open(json_path, 'r') as f:
+        return json.load(f)
 
 
-def compute_latency(input_df, output_df):
-    # Deduplicate output to keep earliest cycle
-    output_df = output_df.sort_values("Cycle").drop_duplicates("RequestID", keep="first")
+def extract_external_requests(data):
+    """Extract external requests (request_id > 0) and separate by read/write"""
+    reads = []
+    writes = []
+    
+    for request in data['requests']:
+        request_id = request.get('request_id', 0)
+        
+        # Skip internal requests (refreshes)
+        if request_id == 0:
+            continue
+        
+        # Get total_time (latency)
+        latency = request.get('total_time')
+        
+        # Skip if no latency data
+        if latency is None or latency <= 0:
+            continue
+        
+        # Categorize by read or write
+        if request.get('read', False):
+            reads.append(latency)
+        elif request.get('write', False):
+            writes.append(latency)
+    
+    return reads, writes
 
-    # Merge on RequestID
-    merged = pd.merge(
-        input_df[["RequestID", "Cycle"]],
-        output_df[["RequestID", "Cycle"]],
-        on="RequestID", suffixes=("_in", "_out")
-    )
-    merged["Latency"] = merged["Cycle_out"] - merged["Cycle_in"]
-    return merged[["Cycle_in", "Latency"]]
+
+def compute_statistics(latencies):
+    """Compute mean and 99th percentile"""
+    if not latencies:
+        return None, None
+    
+    mean = np.mean(latencies)
+    p99 = np.percentile(latencies, 99)
+    return mean, p99
 
 
-def average_latency(df, scale):
-    df = df.sort_values("Cycle_in")
-    df["bin"] = (df["Cycle_in"] // scale) * scale
-    binned = df.groupby("bin")["Latency"].mean().reset_index()
-    return binned.rename(columns={"bin": "Cycle", "Latency": "AvgLatency"})
-
-
-def compute_traffic(df, scale):
-    df = df.copy()
-    df["bin"] = (df["Cycle_in"] // scale) * scale
-    counts = df.groupby("bin").size().reset_index(name="Count")
-    return counts.rename(columns={"bin": "Cycle"})
-
-
-def plot_latency_with_traffic(binned_df, traffic_df, scale, output_path):
-    # Seaborn warm theme
-    sns.set(style="whitegrid", context="notebook", palette="flare")
-    warm_color = sns.color_palette("flare", n_colors=1)[0]
-
-    # Create two stacked subplots with shared x-axis
-    fig, (ax1, ax2) = plt.subplots(
-        2, 1, sharex=True,
-        gridspec_kw={"height_ratios": [3, 1]},
-        figsize=(10, 8)
-    )
-
-    # Plot average latency line
-    ax1.plot(
-        binned_df["Cycle"], binned_df["AvgLatency"],
-        marker="o", linestyle="-", linewidth=2, color=warm_color
-    )
-    ax1.set_ylabel("Average Latency", fontsize=12)
-    ax1.set_title("Latency vs In-Cycle Time", fontsize=14, fontweight='bold')
-    ax1.grid(True, linestyle="--", linewidth=0.5)
-
-    # Plot traffic bar chart
-    ax2.bar(
-        traffic_df["Cycle"], traffic_df["Count"],
-        width=scale * 0.9, alpha=0.6, color=warm_color
-    )
-    ax2.set_xlabel("In-Cycle (binned)", fontsize=12)
-    ax2.set_ylabel("Request Count", fontsize=12)
-    ax2.grid(True, linestyle="--", linewidth=0.5)
-
+def plot_latency_distributions(reads, writes, output_path):
+    """Plot latency distributions for reads and writes"""
+    # Set seaborn style
+    sns.set(style="whitegrid", context="notebook")
+    
+    # Create figure with two subplots
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    
+    # Color palette
+    read_color = sns.color_palette("flare", n_colors=3)[0]
+    write_color = sns.color_palette("mako", n_colors=3)[0]
+    
+    # Plot Read latencies
+    if reads:
+        ax = axes[0]
+        mean_read, p99_read = compute_statistics(reads)
+        
+        ax.hist(reads, bins=50, alpha=0.7, color=read_color, edgecolor='black')
+        ax.axvline(mean_read, color='red', linestyle='--', linewidth=2, 
+                   label=f'Mean: {mean_read:.1f} cycles')
+        ax.axvline(p99_read, color='orange', linestyle='--', linewidth=2,
+                   label=f'99th %ile: {p99_read:.1f} cycles')
+        
+        ax.set_xlabel('Latency (cycles)', fontsize=12)
+        ax.set_ylabel('Frequency', fontsize=12)
+        ax.set_title('Read Request Latency Distribution', fontsize=14, fontweight='bold')
+        ax.legend(loc='upper right', fontsize=10)
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    else:
+        axes[0].text(0.5, 0.5, 'No Read Requests', 
+                     ha='center', va='center', fontsize=14)
+        axes[0].set_title('Read Request Latency Distribution', fontsize=14, fontweight='bold')
+    
+    # Plot Write latencies
+    if writes:
+        ax = axes[1]
+        mean_write, p99_write = compute_statistics(writes)
+        
+        ax.hist(writes, bins=50, alpha=0.7, color=write_color, edgecolor='black')
+        ax.axvline(mean_write, color='red', linestyle='--', linewidth=2,
+                   label=f'Mean: {mean_write:.1f} cycles')
+        ax.axvline(p99_write, color='orange', linestyle='--', linewidth=2,
+                   label=f'99th %ile: {p99_write:.1f} cycles')
+        
+        ax.set_xlabel('Latency (cycles)', fontsize=12)
+        ax.set_ylabel('Frequency', fontsize=12)
+        ax.set_title('Write Request Latency Distribution', fontsize=14, fontweight='bold')
+        ax.legend(loc='upper right', fontsize=10)
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    else:
+        axes[1].text(0.5, 0.5, 'No Write Requests',
+                     ha='center', va='center', fontsize=14)
+        axes[1].set_title('Write Request Latency Distribution', fontsize=14, fontweight='bold')
+    
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300)
-    print(f"✅ Saved combined plot to {output_path}")
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"✅ Saved latency distribution plot to {output_path}")
+
+
+def print_statistics(reads, writes):
+    """Print summary statistics"""
+    print("\n" + "="*50)
+    print("LATENCY STATISTICS")
+    print("="*50)
+    
+    if reads:
+        mean_read, p99_read = compute_statistics(reads)
+        print(f"\n📖 READ REQUESTS (n={len(reads)}):")
+        print(f"   Mean Latency:        {mean_read:.2f} cycles")
+        print(f"   99th Percentile:     {p99_read:.2f} cycles")
+        print(f"   Min Latency:         {min(reads):.2f} cycles")
+        print(f"   Max Latency:         {max(reads):.2f} cycles")
+    else:
+        print("\n📖 READ REQUESTS: None found")
+    
+    if writes:
+        mean_write, p99_write = compute_statistics(writes)
+        print(f"\n✏️  WRITE REQUESTS (n={len(writes)}):")
+        print(f"   Mean Latency:        {mean_write:.2f} cycles")
+        print(f"   99th Percentile:     {p99_write:.2f} cycles")
+        print(f"   Min Latency:         {min(writes):.2f} cycles")
+        print(f"   Max Latency:         {max(writes):.2f} cycles")
+    else:
+        print("\n✏️  WRITE REQUESTS: None found")
+    
+    print("\n" + "="*50)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot latency vs in-cycle time with traffic bars from directory containing input/output CSVs."
+        description="Plot latency distributions for read and write requests from aggregated JSON"
     )
-    parser.add_argument("csv_dir", help="Directory containing input_request_stats.csv and output_request_stats.csv")
-    parser.add_argument("--scale", type=int, default=100,
-                        help="Binning scale for latency average and traffic count (default=100)")
-    parser.add_argument("--out", default="latency_with_traffic.png",
-                        help="Output plot file name")
-
+    parser.add_argument('json_file', type=str, default='out.json', nargs='?',
+                       help='Path to aggregated JSON file (default: out.json)')
+    parser.add_argument('--output', '-o', type=str, default='latency_distributions.png',
+                       help='Output plot filename (default: latency_distributions.png)')
+    
     args = parser.parse_args()
-    csv_dir = Path(args.csv_dir)
-
-    input_csv = csv_dir / "input_request_stats.csv"
-    output_csv = csv_dir / "output_request_stats.csv"
-
-    if not input_csv.exists() or not output_csv.exists():
-        raise FileNotFoundError(
-            "❌ Could not find both 'input_request_stats.csv' and 'output_request_stats.csv' in the provided directory."
-        )
-
-    input_df = read_csv(input_csv)
-    output_df = read_csv(output_csv)
-
-    latency_df = compute_latency(input_df, output_df)
-    binned_latency = average_latency(latency_df, args.scale)
-    traffic_counts = compute_traffic(latency_df, args.scale)
-
-    plot_latency_with_traffic(binned_latency, traffic_counts, args.scale, args.out)
+    
+    # Check if JSON file exists
+    json_path = Path(args.json_file)
+    if not json_path.exists():
+        print(f"❌ Error: JSON file '{args.json_file}' not found")
+        return 1
+    
+    # Load data
+    print(f"📂 Loading data from {args.json_file}...")
+    data = load_json(json_path)
+    
+    # Extract read and write latencies
+    print("📊 Extracting external requests...")
+    reads, writes = extract_external_requests(data)
+    
+    # Print statistics
+    print_statistics(reads, writes)
+    
+    # Plot distributions
+    if not reads and not writes:
+        print("\n⚠️  Warning: No external requests found with valid latency data")
+        return 1
+    
+    print(f"\n🎨 Generating plots...")
+    plot_latency_distributions(reads, writes, args.output)
+    
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
