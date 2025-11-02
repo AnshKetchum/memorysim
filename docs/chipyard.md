@@ -15,3 +15,9 @@ To run MemorySim, go ahead and run the following benchmark
 ```bash
 make run-binary CONFIG=MemorySimRocketConfig BINARY=/workspace/chipyard/.conda-env/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/memcpy.riscv -B | tee run.log
 ```
+
+
+### Running the dev container
+```bash
+docker run -d --privileged --network=host -it --rm --user root eyeamansh/chipyard-dev:latest
+```
