@@ -1,6 +1,6 @@
 # Running Chipyard Benchmarks
 
-## DRAMSim Comparison 
+## DRAMSim 2 Comparison 
 
 To compare output with DRAMSim, go ahead and run the following benchmark to establish a baseline - 
 
