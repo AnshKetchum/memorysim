@@ -22,5 +22,6 @@ make run-binary CONFIG=MemorySimRocketConfig BINARY=/workspace/chipyard/.conda-e
 docker run -d --privileged --network=host -it --rm --user root \
   --memory=32g --memory-swap=64g \
   --name chipyard-development-environment \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
   eyeamansh/chipyard-dev:latest
 ```
