@@ -23,6 +23,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install LibGL 
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    libglu1-mesa \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxi6 \
+    libxrandr2 \
+    libxcursor1 \
+    libxinerama1 \
+    libxft2 \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Install CPIO to get firemarshal running
 RUN sudo apt update
 RUN sudo apt install cpio 
@@ -85,7 +101,16 @@ RUN git config --global --add safe.directory '*'
 # Ensure encoding environment is set for the build user too
 ENV SBT_OPTS="-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8 -Dfile.encoding.pkg=UTF-8"
 ENV _JAVA_OPTIONS="-Dfile.encoding=UTF-8"
+
+# Install chipyard deps
 RUN chmod +x ./build-setup.sh && ./build-setup.sh -s 9 -s 10
+
+# Install Sky130 vlsi deps
+RUN chmod +x ./scripts/init-sky130.sh && source env.sh && ./scripts/init-sky130.sh
+
+# Clone Hammer for any local development if need be
+RUN git clone https://github.com/AnshKetchum/hammer /workspace/hammer
+
 # ------------------------------
 # Default command
 # ------------------------------
