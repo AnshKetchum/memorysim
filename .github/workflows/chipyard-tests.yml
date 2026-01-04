@@ -1,0 +1,67 @@
+name: Chipyard Integration Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-chipyard-benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # adjust if needed
+    container:
+      image: eyeamansh/chipyard-dev:latest
+      options: --user root --network host
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verify Chipyard Directory Exists
+        run: |
+          if [ ! -d "/workspace/chipyard" ]; then
+            echo "Error: /workspace/chipyard directory not found."
+            exit 1
+          fi
+
+      - name: Activate Environment
+        working-directory: /workspace/chipyard
+        shell: bash
+        run: |
+          set -e
+          source env.sh
+          echo "Environment activated."
+
+      - name: Run DRAMSim2 Baseline Benchmark
+        working-directory: /workspace/chipyard/sims/verilator
+        shell: bash
+        run: |
+          set -e
+          echo "Running DRAMSim2 baseline benchmark..."
+          make run-binary \
+            CONFIG=RocketConfig \
+            BINARY=/workspace/chipyard/.conda-env/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/memcpy.riscv \
+            -B | tee run_baseline.log
+          
+          echo "Checking for success pattern in run_baseline.log..."
+          grep -q "PASS" run_baseline.log && echo "✅ DRAMSim2 benchmark passed!" || (echo "❌ DRAMSim2 benchmark failed." && exit 1)
+
+      - name: Clean Build Directory
+        working-directory: /workspace/chipyard/sims/verilator
+        run: |
+          echo "Cleaning build directory..."
+          make clean
+
+      - name: Run MemorySim Benchmark
+        working-directory: /workspace/chipyard/sims/verilator
+        shell: bash
+        run: |
+          set -e
+          echo "Running MemorySim benchmark..."
+          make run-binary \
+            CONFIG=MemorySimRocketConfig \
+            BINARY=/workspace/chipyard/.conda-env/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/memcpy.riscv \
+            -B | tee run_memorysim.log
+          
+          echo "Checking for success pattern in run_memorysim.log..."
+          grep -q "PASS" run_memorysim.log && echo "✅ MemorySim benchmark passed!" || (echo "❌ MemorySim benchmark failed." && exit 1)
